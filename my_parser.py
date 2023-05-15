@@ -17,49 +17,45 @@ precedence = (
 
 # program
 def p_program(p):
-    """program : PROGRAM ID SEMICOLON var_dec func_opt main"""
+    """program : PROGRAM ID SEMICOLON var_dec funcs main"""
     # table.insert(p[2], p[1])
 
 
-# func_opt
-def p_func_opt(p):
-    """func_opt : FUNC return_type ID LP param_opt RP func_block func_opt
+# funcs
+def p_funcs(p):
+    """funcs : FUNC return_type ID LP params RP func_block funcs
     | empty"""
+    # """funcs : FUNC return_type ID LP param_opt RP func_block funcs
+    # | empty"""
 
 
 # param_opt
-def p_param_opt(p):
-    """param_opt : type_simple ID more_param_opt
+def p_params(p):
+    """params : type ID more_params
     | empty"""
 
 
-# more_param_opt
-def p_more_param_opt(p):
-    """more_param_opt : COMMA type_simple ID more_param_opt
+# more_params
+def p_more_params(p):
+    """more_params : COMMA type ID more_params
     | empty"""
 
 
 # var_dec
 def p_var_dec(p):
-    """var_dec : type_simple ID opt_simple_nodim_assignation opt_dim opt_simple_dim_assignation SEMICOLON var_dec
+    """var_dec : type ID dimensionality more_var_decs SEMICOLON var_dec
     | empty"""
 
 
-# opt_simple_dim_assignation
-def p_opt_simple_dim_assignation(p):
-    """opt_simple_dim_assignation : EQUAL_ASS LBR INT_NUMBER RBR
+# more_var_decs
+def p_more_var_decs(p):
+    """more_var_decs : COMMA ID dimensionality more_var_decs
     | empty"""
 
 
-# opt_simple_nodim_assignation
-def p_opt_simple_nodim_assignation(p):
-    """opt_simple_nodim_assignation : EQUAL_ASS constants
-    | empty"""
-
-
-# opt_dim
-def p_opt_dim(p):
-    """opt_dim : LSB INT_NUMBER RSB
+# dimensionality
+def p_dimensionality(p):
+    """dimensionality : LSB INT_NUMBER RSB
     | LSB INT_NUMBER RSB LSB INT_NUMBER RSB
     | empty"""
 
@@ -71,43 +67,20 @@ def p_main(p):
 
 # return_type
 def p_return_type(p):
-    """return_type : type_simple
+    """return_type : type
     | VOID"""
 
 
-# type_simple
-def p_type_simple(p):
-    """type_simple : INT_TYPE
+# type
+def p_type(p):
+    """type : INT_TYPE
     | FLOAT_TYPE
     | CHAR_TYPE"""
 
 
 # assignation
 def p_assignation(p):
-    """assignation : var_usage exp_dim_opt EQUAL_ASS exp_or_func_assignation"""
-
-
-# exp_or_func_assignation
-def p_exp_or_func_assignation(p):
-    """exp_or_func_assignation : expression_assignation
-    | func_call"""
-
-
-# expression_assignation
-def p_expression_assignation(p):
-    """expression_assignation : exp SEMICOLON"""
-
-
-# var_usage
-def p_var_usage(p):
-    """var_usage : ID exp_dim_opt"""
-
-
-# exp_dim_opt
-def p_exp_dim_opt(p):
-    """exp_dim_opt : LSB exp RSB
-    | LSB exp RSB LSB exp RSB
-    | empty"""
+    """assignation : var_usage exp_dim_opt EQUAL_ASS exp SEMICOLON"""
 
 
 # if_statement
@@ -140,18 +113,18 @@ def p_constants(p):
 
 # func_call
 def p_func_call(p):
-    """func_call : ID LP opt_args RP SEMICOLON"""
+    """func_call : ID LP args RP"""
 
 
-# opt_args
-def p_opt_args(p):
-    """opt_args : exp exp_args_more
+# args
+def p_args(p):
+    """args : exp more_args
     | empty"""
 
 
-# exp_args_more
-def p_exp_args_more(p):
-    """exp_args_more : COMMA exp exp_args_more
+# more_args
+def p_more_args(p):
+    """more_args : COMMA exp more_args
     | empty"""
 
 
@@ -161,67 +134,50 @@ def p_statements(p):
     | if_statement
     | while_statement
     | read
-    | func_call
+    | func_call SEMICOLON
     | return
     | print
     | empty"""
 
 
 def p_print(p):
-    """print : PRINT LP opt_string exp RP SEMICOLON"""
+    """print : PRINT LP string opt_exp RP SEMICOLON"""
 
 
-def p_opt_string(p):
-    """opt_string : empty
+def p_opt_exp(p):
+    """opt_exp : exp
+    | empty"""
+
+
+def p_string(p):
+    """string : empty
     | STRING"""
 
 
 # block
 def p_block(p):
-    """block : LBR statements opt_more_statements RBR"""
+    """block : LBR statements more_statements RBR"""
 
 
-def p_opt_more_statements(p):
-    """opt_more_statements : empty
+def p_more_statements(p):
+    """more_statements : empty
     | empty_statements"""
 
 
 def p_empty_statements(p):
     """empty_statements :
-    | statements opt_more_statements"""
+    | statements more_statements"""
 
 
 # func_block
 def p_func_block(p):
-    """func_block : LBR var_dec statements opt_more_statements RBR"""
-
-
-# var_usage_opt
-def p_var_usage_opt(p):
-    """var_usage_opt : var_usage
-    | empty"""
+    """func_block : LBR var_dec statements more_statements RBR"""
 
 
 # return
 def p_return(p):
     """
     return : RETURN LP exp RP SEMICOLON
-    """
-
-
-# method_arg_opt
-def p_method_arg_opt(p):
-    """
-    method_arg_opt : exp meth_exp_more
-                   | empty
-    """
-
-
-# method_exp_more
-def p_meth_exp_more(p):
-    """
-    meth_exp_more : COMMA exp meth_exp_more
-                  | empty
     """
 
 
@@ -261,7 +217,20 @@ def p_expression_final(p):
     exp : LP exp RP
         | constants
         | var_usage
+        | func_call
     """
+
+
+# var_usage
+def p_var_usage(p):
+    """var_usage : ID exp_dim_opt"""
+
+
+# exp_dim_opt
+def p_exp_dim_opt(p):
+    """exp_dim_opt : LSB exp RSB
+    | LSB exp RSB LSB exp RSB
+    | empty"""
 
 
 # epsilon
