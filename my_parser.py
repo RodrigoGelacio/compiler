@@ -2,6 +2,9 @@ import ply.yacc as yacc
 import ply.lex as lex
 import my_lexer
 from my_lexer import tokens
+from symbolTable import SymbolTable
+
+table = SymbolTable()
 
 precedence = (
     ("left", "OR"),
@@ -15,6 +18,7 @@ precedence = (
 # program
 def p_program(p):
     """program : PROGRAM ID SEMICOLON var_dec func_opt main"""
+    # table.insert(p[2], p[1])
 
 
 # func_opt
