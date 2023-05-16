@@ -6,6 +6,7 @@ from symbolTable import SymbolTable
 
 table = SymbolTable()
 
+
 precedence = (
     ("left", "OR"),
     ("left", "AND"),
@@ -18,15 +19,15 @@ precedence = (
 # program
 def p_program(p):
     """program : PROGRAM ID SEMICOLON var_dec funcs main"""
-    # table.insert(p[2], p[1])
+    table.insert("var", id_name=p[2], var_type="program")
 
 
 # funcs
 def p_funcs(p):
     """funcs : FUNC return_type ID LP params RP func_block funcs
     | empty"""
-    # """funcs : FUNC return_type ID LP param_opt RP func_block funcs
-    # | empty"""
+    if len(p) > 2:
+        table.insert("func", id_name=p[3], return_type=p[2])
 
 
 # param_opt
@@ -69,6 +70,7 @@ def p_main(p):
 def p_return_type(p):
     """return_type : type
     | VOID"""
+    p[0] = p[1]
 
 
 # type
@@ -76,6 +78,7 @@ def p_type(p):
     """type : INT_TYPE
     | FLOAT_TYPE
     | CHAR_TYPE"""
+    p[0] = p[1]
 
 
 # assignation
