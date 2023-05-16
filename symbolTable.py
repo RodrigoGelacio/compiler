@@ -26,7 +26,6 @@ class SymbolTable:
             for key, value in kwargs.items():
                 if key != "id_name":
                     self.symbols[self.current_context][key] = value
-            self.change_context("global")
 
     def lookup(self, name):
         return self.symbols.get(name)

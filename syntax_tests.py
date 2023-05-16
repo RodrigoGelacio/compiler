@@ -13,8 +13,12 @@ parser = yacc.yacc(module=my_parser)
 
 ex = r"""
 program my_program;
+int global_variable;
+int global_variable_looool;
 
-func int sum(){}
+func int sum(int a, float b, char c){
+    int i;
+}
 
 main(){}
    

@@ -19,39 +19,64 @@ precedence = (
 # program
 def p_program(p):
     """program : PROGRAM ID SEMICOLON var_dec funcs main"""
-    table.insert("var", id_name=p[2], var_type="program")
 
 
 # funcs
 def p_funcs(p):
-    """funcs : FUNC return_type ID LP params RP func_block funcs
+    """funcs : FUNC return_type ID change_context_to_func LP params RP func_block funcs
     | empty"""
     if len(p) > 2:
-        table.insert("func", id_name=p[3], return_type=p[2])
+        params = p[6]
+        id_name = p[3]
+        return_type = p[2]
+
+        table.insert("func", id_name=id_name, return_type=return_type)
+
+        for i in range(0, len(params), 2):
+            table.insert("var", id_name=params[i + 1], var_type=params[i])
+
+
+def p_change_context_to_func(p):
+    """change_context_to_func :"""
+    table.change_context(p[-1])
 
 
 # param_opt
 def p_params(p):
     """params : type ID more_params
     | empty"""
+    if len(p) == 4 and isinstance(p[3], list):
+        p[0] = p[1:3] + p[3]
+    else:
+        p[0] = p[1]
 
 
 # more_params
 def p_more_params(p):
     """more_params : COMMA type ID more_params
     | empty"""
+    if len(p) > 2:
+        more_params = len(p) - 1
+        p[0] = p[2:4] + p[more_params]
+    else:
+        p[0] = []
 
 
 # var_dec
 def p_var_dec(p):
     """var_dec : type ID dimensionality more_var_decs SEMICOLON var_dec
     | empty"""
+    if len(p) > 2:
+        var_list = [p[2], p[3]] + p[4]
+        var_type = p[1]
 
-
-# more_var_decs
-def p_more_var_decs(p):
-    """more_var_decs : COMMA ID dimensionality more_var_decs
-    | empty"""
+        for i in range(0, len(var_list), 2):
+            table.insert(
+                "var",
+                id_name=var_list[i],
+                var_type=var_type,
+                dimensions=var_list[i + 1],
+            )
 
 
 # dimensionality
@@ -59,6 +84,23 @@ def p_dimensionality(p):
     """dimensionality : LSB INT_NUMBER RSB
     | LSB INT_NUMBER RSB LSB INT_NUMBER RSB
     | empty"""
+    if len(p) == 4:
+        p[0] = [p[2]]
+    elif len(p) == 7:
+        p[0] = [p[2], p[5]]
+    else:
+        p[0] = []
+
+
+# more_var_decs
+def p_more_var_decs(p):
+    """more_var_decs : COMMA ID dimensionality more_var_decs
+    | empty"""
+    if len(p) == 5:
+        more_var_decs = len(p) - 1
+        p[0] = p[more_var_decs] + [p[2], p[3]]
+    else:
+        p[0] = []
 
 
 # main
