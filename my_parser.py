@@ -3,9 +3,14 @@ import ply.lex as lex
 import my_lexer
 from my_lexer import tokens
 from symbolTable import SymbolTable
+from Quad import Quad
+from cubo_semantico import ella_baila_sola
+
+ind_to_varStr = {0: "int", 1: "float", 2: "char", 3: "bool"}
+
 
 table = SymbolTable()
-
+quad = Quad()
 
 precedence = (
     ("left", "OR"),
@@ -23,22 +28,22 @@ def p_program(p):
 
 # funcs
 def p_funcs(p):
-    """funcs : FUNC return_type ID change_context_to_func LP params RP func_block funcs
+    """funcs : FUNC return_type ID change_context_to_func LP params insert_params RP func_block funcs
     | empty"""
-    if len(p) > 2:
-        params = p[6]
-        id_name = p[3]
-        return_type = p[2]
 
-        table.insert("func", id_name=id_name, return_type=return_type)
 
-        for i in range(0, len(params), 2):
-            table.insert("var", id_name=params[i + 1], var_type=params[i])
+def p_insert_params(p):
+    """insert_params :"""
+    params = p[-1]
+    for i in range(0, len(params), 2):
+        table.insert("var", id_name=params[i + 1], var_type=params[i], dimensions=[])
 
 
 def p_change_context_to_func(p):
     """change_context_to_func :"""
+    print("SOLO UNA VEEEEEZ")
     table.change_context(p[-1])
+    table.insert("func", id_name=p[-1], return_type=p[-2])
 
 
 # param_opt
@@ -105,7 +110,12 @@ def p_more_var_decs(p):
 
 # main
 def p_main(p):
-    """main : MAIN LP RP func_block"""
+    """main : MAIN change_context_to_main LP RP func_block"""
+
+
+def p_change_context_to_main(p):
+    """change_context_to_main :"""
+    table.change_context("main")
 
 
 # return_type
@@ -119,13 +129,21 @@ def p_return_type(p):
 def p_type(p):
     """type : INT_TYPE
     | FLOAT_TYPE
-    | CHAR_TYPE"""
+    | CHAR_TYPE
+    | BOOL_TYPE"""
     p[0] = p[1]
 
 
 # assignation
 def p_assignation(p):
     """assignation : var_usage exp_dim_opt EQUAL_ASS exp SEMICOLON"""
+
+    # var_usage is a tuple, first is id second is length of dim
+    # var_usage = p[1]
+    # print("lool:", p[4])
+
+    # table.valid_var(var_usage)
+    # ella_baila_sola()
 
 
 # if_statement
@@ -153,7 +171,10 @@ def p_read(p):
 def p_constants(p):
     """constants : INT_NUMBER
     | FLOAT_NUMBER
-    | CHAR"""
+    | CHAR
+    | BOOL"""
+
+    p[0] = p[1]
 
 
 # func_call
@@ -233,27 +254,43 @@ def p_expression_arithmetic(p):
         | exp MINUS exp
         | exp MULT exp
         | exp DIV exp
-    """
-
-
-# logical expression
-def p_expression_logical(p):
-    """
-    exp : exp AND exp
-        | exp OR exp
-    """
-
-
-# comparative expression
-def p_expression_comparator(p):
-    """
-    exp : exp LT exp
+        | exp LT exp
         | exp GT exp
         | exp LE exp
         | exp GE exp
         | exp EQ exp
         | exp NE exp
+        | exp AND exp
+        | exp OR exp
     """
+    left_op = p[1]
+    right_op = p[3]
+    operation = p[2]
+
+    print(f"Iteration: {operation}, {left_op}, {right_op}")
+
+    left_op, type_left_operand, dim = table.validate(left_op)
+    right_op, type_right_operand, dim = table.validate(right_op)
+
+    # print(f"Ella baila sola valores: {left_operand}, {right_operand}")
+    ind_var_type = ella_baila_sola(type_left_operand, type_right_operand, operation)
+    if ind_var_type == -1:
+        raise ValueError(
+            f"{type_left_operand} is not compatible with {type_right_operand} with {operation}."
+        )
+    else:
+        temp = "t" + str(table.get_current_temp())
+        # print("what temp: ", temp)
+        table.insert(
+            "temp",
+            id_name=temp,
+            var_type=ind_to_varStr[ind_var_type],
+            dimensions=dim,
+        )
+        quad.insert(operation, left_op, right_op, temp)
+        table.increase_temp_counter()
+
+        p[0] = (temp, [], 0)
 
 
 # base case expression
@@ -264,11 +301,16 @@ def p_expression_final(p):
         | var_usage
         | func_call
     """
+    if len(p) > 2:
+        p[0] = p[2]
+    else:
+        p[0] = p[1]
 
 
 # var_usage
 def p_var_usage(p):
     """var_usage : ID exp_dim_opt"""
+    p[0] = (p[1], p[2])
 
 
 # exp_dim_opt
@@ -276,6 +318,12 @@ def p_exp_dim_opt(p):
     """exp_dim_opt : LSB exp RSB
     | LSB exp RSB LSB exp RSB
     | empty"""
+    if len(p) == 4:
+        p[0] = [p[2]]
+    elif len(p) > 4:
+        p[0] = [p[2], p[5]]
+    else:
+        p[0] = []
 
 
 # epsilon

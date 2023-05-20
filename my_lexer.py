@@ -14,6 +14,7 @@ reserved = {
     "int": "INT_TYPE",
     "float": "FLOAT_TYPE",
     "char": "CHAR_TYPE",
+    "bool": "BOOL_TYPE"
 }
 
 tokens = [
@@ -43,6 +44,7 @@ tokens = [
     "DIV",
     "STRING",
     "CHAR",
+    "BOOL"
 ]
 
 tokens = tokens + list(reserved.values())
@@ -56,8 +58,6 @@ t_LBR = r"\{"
 t_RBR = r"\}"
 t_COMMA = r","
 t_SEMICOLON = r";"
-t_INT_NUMBER = r"\d+"
-t_FLOAT_NUMBER = r"[-+]?(\d+(\.\d+))([eE][-+]?\d+)?"
 t_AND = r"&&"
 t_OR = r"\|\|"
 t_GT = r">"
@@ -83,12 +83,31 @@ def t_newline(t):
     r"\n+"
     t.lexer.lineno += len(t.value)
 
+def t_BOOL(t):
+    r"true"
+    r"false"
+    if t.type == "true":
+        t.value = True
+    else:
+        t.value = False
+    return t
 
 # ID tokens and reserved words lookup
 def t_ID(t):
     r"[a-zA-Z_]\w*"
     t.type = reserved.get(t.value, "ID")
     return t
+
+def t_FLOAT_NUMBER(t):
+    r'\d+\.\d+'
+    t.value = float(t.value)
+    return t
+
+def t_INT_NUMBER(t):
+    r"\d+"
+    t.value = int(t.value)
+    return t
+
 
 
 # Error handling rule

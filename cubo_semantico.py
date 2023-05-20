@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 """
 INT =       0
 FLOAT =     1
@@ -5,6 +7,56 @@ CHAR =      2
 BOOL =      3
 ERROR =    -1
 """
+
+
+def ella_baila_sola(op1, op2, operation):
+    """Oraculo nos dice si los dos operandos pueden bailar.
+
+    Args:
+        op1: operante
+        op2: operante
+        op3: operador
+
+    Returns:
+        bool: True si los tipos no son compatibles :(, false en el otro caso.
+    """
+
+    if isinstance(op1, str) and op1[0] != "'":
+        ind_op_1 = ind_with_var(op1)
+    else:
+        ind_op_1 = ind_with_const(op1)
+
+    if isinstance(op2, str) and op2[0] != "'":
+        ind_op_2 = ind_with_var(op2)
+    else:
+        ind_op_2 = ind_with_const(op2)
+
+    if ind_op_1 != -1 and ind_op_2 != -1:
+        return cubo[ind_op_1][ind_op_2][operation]
+
+    else:
+        raise ValueError("El operante no es compatible con los tipos de este lenguaje.")
+
+
+def ind_with_var(op):
+    
+    var_to_ind = {"int": 0, "float": 1, "char": 2, "bool": 3}
+
+    return var_to_ind[op]
+
+
+def ind_with_const(op):
+    if isinstance(op, bool):
+        return 3
+    elif isinstance(op, int):
+        return 0
+    elif isinstance(op, float):
+        return 1
+    elif isinstance(op, str):
+        return 2
+    else:
+        return -1
+
 
 cubo = {}
 cubo[0] = {}

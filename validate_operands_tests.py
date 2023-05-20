@@ -17,12 +17,12 @@ parser = yacc.yacc(module=my_parser)
 
 ex = r"""
 program my_program;
-int global_variable;
-int global_variable_looool;
+int a,b,c,d,e,f,g,h;
+bool control;
 
-func int sum(int a, float b, char c){
-    int i;
-    i = i + 5 + true; 
+func int uno(int a, int b){
+
+    if(5+10*2 > 5 && 90*(5+3) == 8){}
 }
 
 main(){
