@@ -53,7 +53,7 @@ def p_params(p):
     if len(p) == 4 and isinstance(p[3], list):
         p[0] = p[1:3] + p[3]
     else:
-        p[0] = p[1]
+        p[0] = []
 
 
 # more_params
@@ -136,19 +136,40 @@ def p_type(p):
 
 # assignation
 def p_assignation(p):
-    """assignation : var_usage exp_dim_opt EQUAL_ASS exp SEMICOLON"""
+    """assignation : var_usage EQUAL_ASS exp SEMICOLON"""
 
-    # var_usage is a tuple, first is id second is length of dim
-    # var_usage = p[1]
-    # print("lool:", p[4])
+    identifier = p[1]
+    expression = p[3]
 
-    # table.valid_var(var_usage)
-    # ella_baila_sola()
+    id_assignee, var_type_assignee, _ = table.validate(identifier)
+    id_expression, var_type_expression, _ = table.validate(expression)
+
+    if ella_baila_sola(var_type_assignee, var_type_expression, "="):
+        raise ValueError(
+            f"Incompatible types {var_type_assignee} and {var_type_expression} with = operator"
+        )
+
+    quad.insert("=", id_expression, "none", id_assignee)
 
 
 # if_statement
 def p_if_statement(p):
-    """if_statement : IF LP exp RP block else"""
+    """if_statement : IF LP exp insert_go_to_false RP block insert_go_to else"""
+
+
+def p_insert_go_to_false(p):
+    """insert_go_to_false :"""
+    expression = p[-1][0]
+
+    quad.insert("GOTOF", expression, "", "")
+    quad.save_jump()
+
+def p_insert_go_to(p):
+    """insert_go_to : """
+    quad.insert("GOTO","","","")
+    curr_quad_index = quad.get_current_quad_index()
+    quad.insert_direction_to_quad(curr_quad_index)
+    quad.save_jump()
 
 
 # else
@@ -156,10 +177,25 @@ def p_else(p):
     """else : ELSE block
     | empty"""
 
+    curr_quad_index = quad.get_current_quad_index()
+    
+    quad.insert_direction_to_quad(curr_quad_index)
+
 
 # while_statement
 def p_while_statement(p):
-    """while_statement : WHILE LP exp RP block"""
+    """while_statement : WHILE LP save_exp_start_direction exp insert_go_to_false RP block insert_go_to_while"""
+
+def p_insert_go_to_while(p):
+    """insert_go_to_while : """
+    pending_jump = quad.get_go_to_direction_while_statement()
+    quad.insert("GOTO","","",pending_jump)
+    curr_quad_dir = quad.get_current_quad_index()
+    quad.insert_direction_to_quad(curr_quad_dir)
+
+def p_save_exp_start_direction(p):
+    """save_exp_start_direction : """
+    quad.save_start_exp_direction()
 
 
 # read
