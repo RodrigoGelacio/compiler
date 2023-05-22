@@ -44,72 +44,91 @@ class SymbolTable:
                 if key != "id_name":
                     self.symbols[self.current_context][key] = value
 
-    def valid_temp(self, temp):
-        id_name, dim, _ = temp
+    def validate(self, identifier):
+        """Validate identifier
+        Vars:
+            column: either "temp" or "var"
 
-        if self.symbols[self.current_context]["temps"][id_name]:
-            if (
-                self.symbols[self.current_context]["temps"][id_name]["dimensions"]
-                == dim
-            ):
-                return (
-                    True,
-                    self.symbols[self.current_context]["temps"][id_name]["var_type"],
-                )
-            else:
-                raise ValueError(
-                    f"trying to access a variable with different dimensions. Var '{id_name}' in {self.current_context}"
-                )
+        Return:
+            Tuple
+                0 - identifier
+                1 - primitive var_type
+                2 - list of dimensions
+        """
+        if isinstance(identifier, tuple) and len(identifier) == 3:
+            id_name, dim, _ = identifier
+            is_valid, var_type = self.__validate("temps", id_name, dim)
+            identifier = identifier[0]
+            if not is_valid:
+                raise ValueError(f"{identifier} is not declared")
 
-        if self.symbols["global"]["temps"][id_name]:
-            if self.symbols["global"]["temps"][id_name]["dimensions"] == dim:
-                return (True, self.symbols["global"]["temps"][id_name]["var_type"])
-            else:
-                raise ValueError(
-                    f"trying to access a variable with different dimensions. Var '{id_name}' in global"
-                )
+            return identifier, var_type, dim
 
-        return (False, "")
+        elif isinstance(identifier, tuple) and len(identifier) == 2:
+            id_name, dim = identifier
+            is_valid, var_type = self.__validate("vars", id_name, dim)
+            identifier = identifier[0]
+            if not is_valid:
+                raise ValueError(f"{identifier} is not declared")
 
-    def valid_var(self, var):
-        id_name, dim = var
-        if self.symbols[self.current_context]["vars"][id_name]:
-            if self.symbols[self.current_context]["vars"][id_name]["dimensions"] == dim:
-                return (
-                    True,
-                    self.symbols[self.current_context]["vars"][id_name]["var_type"],
-                )
-            else:
-                raise ValueError(
-                    f"trying to access a variable with different dimensions. Var '{id_name}' in {self.current_context}"
-                )
-
-        if self.symbols["global"]["vars"][id_name]:
-            if self.symbols["global"]["vars"][id_name]["dimensions"] == dim:
-                return (True, self.symbols["global"]["vars"][id_name]["var_type"])
-            else:
-                raise ValueError(
-                    f"trying to access a variable with different dimensions. Var '{id_name}' in global"
-                )
-
-        return (False, "")
-
-    def validate(self, op):
-        if isinstance(op, tuple):
-            if len(op) == 2:
-                valid_op_l, validated_op_type = self.valid_var(op)
-            elif len(op) == 3:
-                valid_op_l, validated_op_type = self.valid_temp(op)
-
-            dim = op[1]
-            op = op[0]
-            if not valid_op_l:
-                raise ValueError(f"{op} is not declared")
-
-            print("LOOOL: ", validated_op_type)
-            return op, validated_op_type, dim
+            return identifier, var_type, dim
         else:
-            return op, op, []
+            return identifier, identifier, []
+
+    def __validate(self, type_var, id_name, dim):
+        """Check if the id_name is registered with correct dimensionality
+
+        Vars:
+            type_var: either "vars" or "temps"
+            id_name: name of identifier
+            dim: list of identifier dimensions
+
+        Return:
+            Tuple
+                0 - boolean wether it is a valid identifier
+                1 - primitive var type
+        """
+        if self.symbols[self.current_context][type_var][id_name]:
+            if self.__valid_dimensionality(type_var, id_name, dim):
+                return (
+                    True,
+                    self.symbols[self.current_context][type_var][id_name]["var_type"],
+                )
+
+        curr_context = self.current_context
+        self.change_context("global")
+        if self.symbols[self.current_context][type_var][id_name]:
+            if self.__valid_dimensionality(type_var, id_name, dim):
+                return (
+                    True,
+                    self.symbols[self.current_context][type_var][id_name]["var_type"],
+                )
+        self.change_context(curr_context)
+        return (False, "")
+
+    def __valid_dimensionality(self, column, id_name, dim):
+        """Check whether the access dim is valid. Raise errors in case the dim access
+        is wrong or there is an out of bounds access.
+
+        Vars:
+            search_id_section: column to search in a table
+            id_name: name of variable
+            dim: list containing dimensions
+
+        Return:
+            bool: only return True if it is a valid dimensionality, otherwise
+                    it raises an Error.
+        """
+        searched_dim = self.symbols[self.current_context][column][id_name]["dimensions"]
+        if len(searched_dim) != len(dim):
+            raise ValueError(
+                f"Wrong dimensionality access in {id_name} at {self.current_context} "
+            )
+
+        for i, e in enumerate(searched_dim):
+            if dim[i] >= e:
+                raise ValueError(f"Out of bounds access on {id_name}")
+        return True
 
     def delete(self, name):
         del self.symbols[name]

@@ -17,12 +17,20 @@ parser = yacc.yacc(module=my_parser)
 
 ex = r"""
 program my_program;
-int a,b,c,d,e,f,g,h;
 bool control;
+
 
 func int uno(int a, int b){
 
-    if(5+10*2 > 5 && 90*(5+3) == 8){}
+    int i;
+
+    if(i > 0){
+        while(5 > 0){
+         i = 5 * 5 * 5 * 5 * 5;
+        }
+
+        i = 6;
+    }
 }
 
 main(){
@@ -39,5 +47,9 @@ table.print_symbols()
 print()
 print("<-------- Quads ---------->")
 quad_list = quads.get_quad_list()
-for op, l, r, res in quad_list:
-    print(f"{op}, {l}, {r}, {res}")
+for i, e in enumerate(quad_list):
+    quad = f"{i}: "
+    for elem in e:
+        quad += f" {elem},"
+    print(quad)
+
