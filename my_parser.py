@@ -76,6 +76,8 @@ def p_var_dec(p):
         var_type = p[1]
 
         for i in range(0, len(var_list), 2):
+            if table.is_it_already_declared(var_list[i]):
+                raise ValueError(f"{var_list[i]} already declared")
             table.insert(
                 "var",
                 id_name=var_list[i],
@@ -164,9 +166,10 @@ def p_insert_go_to_false(p):
     quad.insert("GOTOF", expression, "", "")
     quad.save_jump()
 
+
 def p_insert_go_to(p):
-    """insert_go_to : """
-    quad.insert("GOTO","","","")
+    """insert_go_to :"""
+    quad.insert("GOTO", "", "", "")
     curr_quad_index = quad.get_current_quad_index()
     quad.insert_direction_to_quad(curr_quad_index)
     quad.save_jump()
@@ -178,7 +181,7 @@ def p_else(p):
     | empty"""
 
     curr_quad_index = quad.get_current_quad_index()
-    
+
     quad.insert_direction_to_quad(curr_quad_index)
 
 
@@ -186,21 +189,27 @@ def p_else(p):
 def p_while_statement(p):
     """while_statement : WHILE LP save_exp_start_direction exp insert_go_to_false RP block insert_go_to_while"""
 
+
 def p_insert_go_to_while(p):
-    """insert_go_to_while : """
+    """insert_go_to_while :"""
     pending_jump = quad.get_go_to_direction_while_statement()
-    quad.insert("GOTO","","",pending_jump)
+    quad.insert("GOTO", "", "", pending_jump)
     curr_quad_dir = quad.get_current_quad_index()
     quad.insert_direction_to_quad(curr_quad_dir)
 
+
 def p_save_exp_start_direction(p):
-    """save_exp_start_direction : """
+    """save_exp_start_direction :"""
     quad.save_start_exp_direction()
 
 
 # read
 def p_read(p):
     """read : READ LP var_usage RP SEMICOLON"""
+
+    variable = p[3][0]
+
+    quad.insert("READ", "somehting", "", variable)
 
 
 # constants
@@ -209,7 +218,6 @@ def p_constants(p):
     | FLOAT_NUMBER
     | CHAR
     | BOOL"""
-
     p[0] = p[1]
 
 
@@ -243,17 +251,28 @@ def p_statements(p):
 
 
 def p_print(p):
-    """print : PRINT LP string opt_exp RP SEMICOLON"""
+    """print : PRINT LP print_args RP SEMICOLON"""
+    if isinstance(p[3], tuple):
+        print_arg, _, _ = table.validate(p[3])
+    else:
+        print_arg = p[3]
+    quad.insert("PRINT", "", "", print_arg)
 
 
-def p_opt_exp(p):
-    """opt_exp : exp
+def p_print_args(p):
+    """print_args : string_or_exp
     | empty"""
+    p[0] = p[1]
 
 
-def p_string(p):
-    """string : empty
-    | STRING"""
+def p_exp_print(p):
+    """string_or_exp : exp"""
+    p[0] = p[1]
+
+
+def p_string_print(p):
+    """string_or_exp : STRING"""
+    p[0] = p[1]
 
 
 # block

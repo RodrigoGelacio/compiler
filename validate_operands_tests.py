@@ -18,18 +18,25 @@ parser = yacc.yacc(module=my_parser)
 ex = r"""
 program my_program;
 bool control;
+int i;
 
 
 func int uno(int a, int b){
 
     int i;
 
+    float ij;
+
+    print("hey");
+
     if(i > 0){
         while(5 > 0){
          i = 5 * 5 * 5 * 5 * 5;
+         print(i + 7 - 6);
         }
 
         i = 6;
+
     }
 }
 

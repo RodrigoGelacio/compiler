@@ -44,6 +44,20 @@ class SymbolTable:
                 if key != "id_name":
                     self.symbols[self.current_context][key] = value
 
+    def is_it_already_declared(self, id_name):
+        """Check whether the identifier has already been declared
+
+        Vars:
+            id_name: str, name of the identifier
+
+        Returns:
+            Bool: whether it is already declared or not
+        """
+        if self.symbols[self.current_context]["vars"][id_name] == {}:
+            return False
+
+        return True
+
     def validate(self, identifier):
         """Validate identifier
         Vars:
@@ -88,6 +102,7 @@ class SymbolTable:
                 0 - boolean wether it is a valid identifier
                 1 - primitive var type
         """
+
         if self.symbols[self.current_context][type_var][id_name]:
             if self.__valid_dimensionality(type_var, id_name, dim):
                 return (
