@@ -28,7 +28,7 @@ class SymbolTable:
         print("changing context to: ", context)
         self.current_context = context
 
-    def insert(self, insert_type, **kwargs):
+    def insert(self, insert_type, dim=False, **kwargs):
         if insert_type == "var":
             for key, value in kwargs.items():
                 if key != "id_name":
@@ -41,6 +41,8 @@ class SymbolTable:
             else:
                 self.symbols[self.current_context]["vars"][kwargs["id_name"]]["v_address"] = self.__local_address
                 self.__local_address += 1
+            if dim:
+                self.if_var_has_dim_allocate_memory(**kwargs)
 
         if insert_type == "temp":
             for key, value in kwargs.items():
@@ -63,12 +65,21 @@ class SymbolTable:
             _, var_type, _,_ = self.validate(kwargs["exp"])
 
             self.symbols["global"]["vars"][self.current_context]["var_type"] = var_type
-            self.symbols["global"]["vars"][self.current_context]["dimension"] = []
 
         elif insert_type == "func":
             for key, value in kwargs.items():
                 if key != "id_name":
                     self.symbols[self.current_context][key] = value
+
+    def if_var_has_dim_allocate_memory(self, **kwargs):
+        if len(kwargs["dimensions"]) != 0:
+            var_size = 1
+            for dim in kwargs["dimensions"]:
+                var_size *= dim
+            if self.current_context != "global":
+                self.__local_address += var_size - 1
+            else:
+                self.__global_address += var_size - 1
 
     def insert_quad_index_where_func_starts(self, quad_index):
         """Insert quad index where function starts
@@ -229,26 +240,26 @@ class SymbolTable:
         # self.print_symbols()
         # print("this is printing: ", identifier)
 
-        if isinstance(identifier, tuple) and len(identifier) == 3:
-            id_name, dim, _ = identifier
-            is_valid, var_type, v_address = self.__validate("temps", id_name, dim)
+        if isinstance(identifier, tuple) and len(identifier) == 2:
+            id_name, _ = identifier
+            is_valid, var_type, v_address = self.__validate("temps", id_name)
             identifier = identifier[0]
             if not is_valid:
                 raise ValueError(f"{identifier} is not declared")
 
-            return identifier, var_type, dim, v_address
+            return identifier, var_type, v_address
 
-        elif isinstance(identifier, tuple) and len(identifier) == 2:
-            id_name, dim = identifier
-            is_valid, var_type, v_address = self.__validate("vars", id_name, dim)
+        elif isinstance(identifier, tuple) and len(identifier):
+            id_name = identifier
+            is_valid, var_type, v_address = self.__validate("vars", id_name)
             identifier = identifier[0]
             if not is_valid:
                 raise ValueError(f"{identifier} is not declared")
 
-            return identifier, var_type, dim, v_address
+            return identifier, var_type, v_address
         else:
             v_address = self.get_virtual_add_const(identifier)
-            return identifier, identifier, [], v_address
+            return identifier, identifier, v_address
     
     def get_virtual_add_const(self,constant):
         """Search for the virtual address of a constant
@@ -261,7 +272,7 @@ class SymbolTable:
         """
         return self.symbols["constants"][constant]["v_address"]
 
-    def __validate(self, type_var, id_name, dim):
+    def __validate(self, type_var, id_name):
         """Check if the id_name is registered with correct dimensionality
 
         Vars:
@@ -275,56 +286,30 @@ class SymbolTable:
                 1 - primitive var type
         """
         if self.symbols[self.current_context][type_var][id_name]:
-            if self.__valid_dimensionality(type_var, id_name, dim):
-                return (
-                    True,
-                    self.symbols[self.current_context][type_var][id_name]["var_type"],
-                    self.symbols[self.current_context][type_var][id_name]["v_address"]
-                )
+            return (
+                True,
+                self.symbols[self.current_context][type_var][id_name]["var_type"],
+                self.symbols[self.current_context][type_var][id_name]["v_address"]
+            )
         else:
             del self.symbols[self.current_context][type_var][id_name]
 
         curr_context = self.current_context
         self.change_context("global")
         if self.symbols[self.current_context][type_var][id_name]:
-            if self.__valid_dimensionality(type_var, id_name, dim):
-                var_type = self.symbols[self.current_context][type_var][id_name]["var_type"]
-                v_address = self.symbols[self.current_context][type_var][id_name]["v_address"]
-                self.change_context(curr_context)
+            var_type = self.symbols[self.current_context][type_var][id_name]["var_type"]
+            v_address = self.symbols[self.current_context][type_var][id_name]["v_address"]
+            self.change_context(curr_context)
 
-                return (
-                    True,
-                    var_type,
-                    v_address
-                )
+            return (
+                True,
+                var_type,
+                v_address
+            )
         else:
             del self.symbols[self.current_context][type_var][id_name]
         self.change_context(curr_context)
-        return (False, "")
-
-    def __valid_dimensionality(self, column, id_name, dim):
-        """Check whether the access dim is valid. Raise errors in case the dim access
-        is wrong or there is an out of bounds access.
-
-        Vars:
-            search_id_section: column to search in a table
-            id_name: name of variable
-            dim: list containing dimensions
-
-        Return:
-            bool: only return True if it is a valid dimensionality, otherwise
-                    it raises an Error.
-        """
-        searched_dim = self.symbols[self.current_context][column][id_name]["dimensions"]
-        if len(searched_dim) != len(dim):
-            raise ValueError(
-                f"Wrong dimensionality access in {id_name} at {self.current_context} "
-            )
-
-        for i, e in enumerate(searched_dim):
-            if dim[i] >= e:
-                raise ValueError(f"Out of bounds access on {id_name}")
-        return True
+        return (False, "",0)
 
     def delete(self, name):
         del self.symbols[name]

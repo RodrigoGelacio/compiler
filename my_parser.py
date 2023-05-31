@@ -56,7 +56,7 @@ def p_insert_params(p):
     param_types = []
     for i in range(0, len(params), 2):
         print("INSERT_PARAMS")
-        table.insert("var", id_name=params[i + 1], var_type=params[i], dimensions=[])
+        table.insert("var", id_name=params[i + 1], var_type=params[i])
         param_types.append(params[i])
     table.insert("params", params=param_types)
 
@@ -98,17 +98,24 @@ def p_var_dec(p):
         var_list = [p[2], p[3]] + p[4]
         var_type = p[1]
 
-
+        print("VAR_LIST: ", var_list)
         for i in range(0, len(var_list), 2):
-            print("VAR_DEC")
             if table.is_it_already_declared(var_list[i]):
                 raise ValueError(f"{var_list[i]} already declared")
-            table.insert(
-                "var",
-                id_name=var_list[i],
-                var_type=var_type,
-                dimensions=var_list[i + 1],
-            )
+            if len(var_list[i+1]) == 0:
+                table.insert(
+                    "var",
+                    id_name=var_list[i],
+                    var_type=var_type,
+                )
+            else:
+                table.insert(
+                    "var",
+                    id_name=var_list[i],
+                    dim = True,
+                    var_type=var_type,
+                    dimensions = var_list[i+1]
+                )
 
 
 # dimensionality
@@ -178,8 +185,8 @@ def p_assignation(p):
 
     # print("this is the result of the exp: ", expression)
 
-    id_assignee, var_type_assignee, _, v_address_assignee= table.validate(identifier)
-    id_expression, var_type_expression, _, v_address_expression= table.validate(expression)
+    id_assignee, var_type_assignee, v_address_assignee= table.validate(identifier)
+    id_expression, var_type_expression, v_address_expression= table.validate(expression)
 
     print("ella baila sola: ", var_type_expression)
 
@@ -200,7 +207,7 @@ def p_insert_go_to_false(p):
     """insert_go_to_false : """
     expression = p[-1]
     print("THIS IS THE EXPRESSION: ", expression)
-    _,_,_,v_add = table.validate(expression)
+    _,_,v_add = table.validate(expression)
 
     quad.insert("GOTOF", v_add, "", "")
 
@@ -290,10 +297,9 @@ def p_func_call(p):
         "temp",
         id_name=temp,
         var_type=var_type,
-        dimensions=[],
     )
 
-    _,_,_,v_address = table.validate((temp,[],0))
+    _,_,v_address = table.validate((temp,[],0))
     quad.insert("=", func_name, "", v_address)
     table.increase_temp_counter()
 
@@ -341,7 +347,7 @@ def p_statements(p):
 def p_print(p):
     """print : PRINT LP print_args RP SEMICOLON"""
 
-    _, _, _, v_address = table.validate(p[3])
+    _, _, v_address = table.validate(p[3])
     quad.insert("PRINT", "", "", v_address)
 
 
@@ -393,7 +399,7 @@ def p_return(p):
     exp = p[3]
     table.is_return_type_ok(exp)
     table.insert("return", exp=exp)
-    _,_,_,v_address = table.validate(exp)
+    _,_,v_address = table.validate(exp)
     quad.insert("RETURN","","",v_address)
 
 
@@ -437,8 +443,8 @@ def p_expression_arithmetic(p):
 
     print(f"Iteration: {operation}, {left_op}, {right_op}")
 
-    left_op, type_left_operand, dim, left_op_v_add = table.validate(left_op)
-    right_op, type_right_operand, dim, right_op_v_add = table.validate(right_op)
+    left_op, type_left_operand, left_op_v_add = table.validate(left_op)
+    right_op, type_right_operand, right_op_v_add = table.validate(right_op)
 
     # print(f"Ella baila sola valores: {left_operand}, {right_operand}")
     ind_var_type = ella_baila_sola(type_left_operand, type_right_operand, operation)
@@ -454,13 +460,12 @@ def p_expression_arithmetic(p):
             "temp",
             id_name=temp,
             var_type=ind_to_varStr[ind_var_type],
-            dimensions=dim,
         )
-        _,_,_,temp_v_add = table.validate((temp,[],0))
+        _,_,temp_v_add = table.validate((temp,0))
         quad.insert(operation, left_op_v_add, right_op_v_add, temp_v_add)
         table.increase_temp_counter()
 
-        p[0] = (temp, [], 0)
+        p[0] = (temp, 0)
 
 
 # base case expression

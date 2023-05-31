@@ -16,43 +16,14 @@ lexer = lex.lex(module=my_lexer)
 parser = yacc.yacc(module=my_parser)
 
 ex = r"""
-program my_program;
-int i,j,k;
-float f;
-
-func void uno(int a, int b){
-    if(a>0){
-        i = a + b * j + i;
-        print(i+j);
-        uno(a-i, i);
-    }
-    else{
-        print(a + b);
-    }
-}
-
-
-func int dos(int a, float g){
-
-    i = a;
-
-    print('a');
-
-    while(a>0){
-        a = a - k * j;
-        uno(a*2, a+k);
-        g = g*j-k;
-    }
-
-    return (i+k*j);
-}
+program lol;
 
 main(){
-    int my_int;
-    float my_float;
-    i = 2;
-    k = i + 1;
-    f = 3.14 + dos(my_int, my_float);
+    int a[2][3], e[8];
+    int d[5];
+    int b;
+    int c;
+
 }
 """
 
