@@ -72,7 +72,6 @@ t_MINUS = r"-"
 t_MULT = r"\*"
 t_STRING = r'".*"'
 t_DIV = r"\/"
-t_CHAR = r"'.'"
 
 # Ignored characters (spaces and tabs)
 t_ignore = " \t"
@@ -82,6 +81,11 @@ t_ignore = " \t"
 def t_newline(t):
     r"\n+"
     t.lexer.lineno += len(t.value)
+
+def t_CHAR(t):
+    r"'.'"
+    t.value = t.value[1:2]
+    return t
 
 
 def t_BOOL(t):
