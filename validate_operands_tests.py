@@ -19,11 +19,11 @@ ex = r"""
 program lol;
 
 main(){
-    int a[2][3], e[8];
-    int d[5];
-    int b;
-    int c;
 
+    int i;
+    float j[5][6];
+
+    i = j[0][4];
 }
 """
 

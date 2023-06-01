@@ -1,5 +1,4 @@
 from collections import defaultdict
-from cubo_semantico import ella_baila_sola
 
 
 class SymbolTable:
@@ -14,19 +13,24 @@ class SymbolTable:
         self.symbols = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
         self.current_context = "global"
         self.temp_counter = 1
+        self.ptr_counter = 1
+        self.__pt_address = 30000
         self.__constant_address = 20000
         self.__local_address = 10000
         self.__global_address = 0
 
+    def get_current_ptr(self):
+        return self.ptr_counter
+
     def get_current_temp(self):
         return self.temp_counter
-
-    def increase_temp_counter(self):
-        self.temp_counter += 1
 
     def change_context(self, context):
         print("changing context to: ", context)
         self.current_context = context
+    
+    def get_ptr_v_add(self, ptr_id):
+        return self.symbols["pointers"][ptr_id]["v_address"]
 
     def insert(self, insert_type, dim=False, **kwargs):
         if insert_type == "var":
@@ -52,6 +56,8 @@ class SymbolTable:
                     ] = value
             self.symbols[self.current_context]["temps"][kwargs["id_name"]]["v_address"] = self.__local_address
             self.__local_address += 1
+            self.temp_counter += 1
+
         elif insert_type == "params":
             for key, value in kwargs.items():
                 self.symbols[self.current_context][key] = value
@@ -66,10 +72,48 @@ class SymbolTable:
 
             self.symbols["global"]["vars"][self.current_context]["var_type"] = var_type
 
+        elif insert_type == "pointer":
+            for key, value in kwargs.items():
+                if key != "id_name":
+                    self.symbols["pointers"][kwargs["id_name"]][key] = value
+            self.symbols["pointers"][kwargs["id_name"]]["v_address"] = self.__pt_address
+            self.__pt_address += 1
+            self.ptr_counter += 1
+
         elif insert_type == "func":
             for key, value in kwargs.items():
                 if key != "id_name":
                     self.symbols[self.current_context][key] = value
+        
+
+    def get_dim_var_info(self, name_id):
+        """Get the lower and upper boundary of dimensional variable
+
+            Vars:
+                name_id: str, name of dim variable
+
+            Return:
+                list(int): list of sizes of dimensios
+        """
+        #check for gloabl context alsoooooo
+
+        
+        if self.symbols[self.current_context]["vars"][name_id]:
+            return (self.symbols[self.current_context]["vars"][name_id]["v_address"], 
+                    self.symbols[self.current_context]["vars"][name_id]["dimensions"], 
+                    self.symbols[self.current_context]["vars"][name_id]["var_type"])
+        else:
+            del self.symbols[self.current_context]["vars"][name_id]
+        
+        if self.symbols["global"]["vars"][name_id]:
+            return (self.symbols["global"]["vars"][name_id]["v_address"], 
+                    self.symbols["global"]["vars"][name_id]["dimensions"],
+                    self.symbols["global"]["vars"][name_id]["var_type"])
+        else:
+            del self.symbols["global"]["vars"][name_id]
+
+        raise ValueError(f"Dimensional var '{name_id}' is not defined")
+
 
     def if_var_has_dim_allocate_memory(self, **kwargs):
         if len(kwargs["dimensions"]) != 0:
@@ -235,12 +279,11 @@ class SymbolTable:
             Tuple
                 0 - identifier
                 1 - primitive var_type
-                2 - list of dimensions
+                2 - virtual address
         """
         # self.print_symbols()
         # print("this is printing: ", identifier)
-
-        if isinstance(identifier, tuple) and len(identifier) == 2:
+        if isinstance(identifier, tuple) and identifier[1] == 0:
             id_name, _ = identifier
             is_valid, var_type, v_address = self.__validate("temps", id_name)
             identifier = identifier[0]
@@ -249,17 +292,30 @@ class SymbolTable:
 
             return identifier, var_type, v_address
 
-        elif isinstance(identifier, tuple) and len(identifier):
-            id_name = identifier
+
+        elif isinstance(identifier, tuple) and identifier[1] == '_':
+            id_name,_ = identifier
             is_valid, var_type, v_address = self.__validate("vars", id_name)
             identifier = identifier[0]
             if not is_valid:
                 raise ValueError(f"{identifier} is not declared")
 
             return identifier, var_type, v_address
+        
+        elif isinstance(identifier, tuple) and identifier[1] == "ptr":
+            id_name,_ = identifier
+            var_type, v_address = self.get_ptr_info(id_name)
+            return id_name, var_type, v_address
+
         else:
             v_address = self.get_virtual_add_const(identifier)
             return identifier, identifier, v_address
+    
+    def get_ptr_info(self, ptr_id):
+        var_type = self.symbols["pointers"][ptr_id]["var_type"]
+        v_address = self.symbols["pointers"][ptr_id]["v_address"]
+
+        return var_type, v_address
     
     def get_virtual_add_const(self,constant):
         """Search for the virtual address of a constant

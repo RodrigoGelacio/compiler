@@ -98,7 +98,6 @@ def p_var_dec(p):
         var_list = [p[2], p[3]] + p[4]
         var_type = p[1]
 
-        print("VAR_LIST: ", var_list)
         for i in range(0, len(var_list), 2):
             if table.is_it_already_declared(var_list[i]):
                 raise ValueError(f"{var_list[i]} already declared")
@@ -124,8 +123,13 @@ def p_dimensionality(p):
     | LSB INT_NUMBER RSB LSB INT_NUMBER RSB
     | empty"""
     if len(p) == 4:
+        table.insert("constant", id_name=0)
+        table.insert("constant", id_name=p[2])
         p[0] = [p[2]]
     elif len(p) == 7:
+        table.insert("constant", id_name=0)
+        table.insert("constant", id_name=p[2])
+        table.insert("constant", id_name=p[5])
         p[0] = [p[2], p[5]]
     else:
         p[0] = []
@@ -301,7 +305,6 @@ def p_func_call(p):
 
     _,_,v_address = table.validate((temp,[],0))
     quad.insert("=", func_name, "", v_address)
-    table.increase_temp_counter()
 
     p[0] = (temp, [], 0)
 
@@ -463,7 +466,6 @@ def p_expression_arithmetic(p):
         )
         _,_,temp_v_add = table.validate((temp,0))
         quad.insert(operation, left_op_v_add, right_op_v_add, temp_v_add)
-        table.increase_temp_counter()
 
         p[0] = (temp, 0)
 
@@ -485,7 +487,10 @@ def p_expression_final(p):
 # var_usage
 def p_var_usage(p):
     """var_usage : ID exp_dim_opt"""
-    p[0] = (p[1], p[2])
+    if len(p[2]) != 0:
+        p[0] = p[2]
+    else:
+        p[0] = (p[1], "_")
 
 
 # exp_dim_opt
@@ -494,9 +499,94 @@ def p_exp_dim_opt(p):
     | LSB exp RSB LSB exp RSB
     | empty"""
     if len(p) == 4:
-        p[0] = [p[2]]
+        #get initial v_add of dim variable and its dimensions
+        base_v_add, dims, var_type = table.get_dim_var_info(p[-1])
+
+        if len(dims) != 1:
+            raise Exception(f"Wrong dimensional access on '{p[-1]}'")
+        
+        #get v_add of upper_boundary and lower_boundary(0) of dim
+        _,_,upper_dim_v_add = table.validate(dims[0])
+        _,_,lower_dim_v_add = table.validate(0)
+
+        #validate the argument exists and get its v_add
+        _,_, index_v_add = table.validate(p[2])
+
+        #insert quad to verify at run time the exp is within bounds
+        quad.insert("VER",index_v_add,lower_dim_v_add, upper_dim_v_add)
+
+        #add bas_v_add to constants
+        table.insert("constant", id_name=base_v_add)
+
+        #get v_add of base_v_add
+        _,_,ptr_to_base_v_add=table.validate(base_v_add)
+
+        #insert ptr to symbol table, ptr will be pointing towards the direction of the casilla
+        ptr = "pt" + str(table.get_current_ptr())
+        table.insert("pointer", id_name=ptr, var_type=var_type)
+
+        #get v_add of pointer that pointing towards the casilla
+        casilla_ptr = table.get_ptr_v_add(ptr)
+
+        quad.insert("+", index_v_add, ptr_to_base_v_add, casilla_ptr)
+
+        p[0] = (ptr, "ptr")
     elif len(p) > 4:
-        p[0] = [p[2], p[5]]
+        #info of dim variable
+        base_v_add, dims, var_type = table.get_dim_var_info(p[-1])
+
+        if len(dims) != 2:
+            raise Exception(f"Wrong dimensional access on '{p[-1]}'")
+        
+        #get v_add of upper_boundary and lower_boundary(0) of dims for first dim
+        _,_,upper_dim_v_add_1 = table.validate(dims[0])
+        _,_,lower_dim_v_add_1 = table.validate(0)
+
+        #get v_add of upper_boundary and lower_boundary(0) of dims for second dim
+        _,_,upper_dim_v_add_2 = table.validate(dims[1])
+        lower_dim_v_add_2 = lower_dim_v_add_1
+
+        #info of expressions
+        _,_,index_v_add_1 = table.validate(p[2])
+        _,_,index_v_add_2 = table.validate(p[5])
+
+        #insert quad verification
+        quad.insert("VER",index_v_add_1,lower_dim_v_add_1, upper_dim_v_add_1)
+        quad.insert("VER",index_v_add_2,lower_dim_v_add_2, upper_dim_v_add_2)
+
+        #add base_v_add to constants
+        table.insert("constant", id_name=base_v_add)
+
+        #get v_add of base address
+        _,_, ptr_to_base_v_add = table.validate(base_v_add)
+
+        # create new temp and get its v_address
+        temp = "t" + str(table.get_current_temp())
+        table.insert("temp", id_name=temp, var_type=var_type)
+        _,_,temp_v_add = table.validate((temp,0))
+
+        # quad to jump number of rows
+        quad.insert("*", index_v_add_1, upper_dim_v_add_2, temp_v_add)
+
+        # create new temp and get its v_address
+        temp = "t" + str(table.get_current_temp())
+        table.insert("temp", id_name=temp, var_type=var_type)
+        _,_,temp_v_add_2 = table.validate((temp, 0))
+
+        # quad to add the number of cols
+        quad.insert("+", index_v_add_2, temp_v_add, temp_v_add_2)
+
+        # create ptr that points to the casilla and get its v_add
+        ptr = "pt" + str(table.get_current_ptr())
+        table.insert("pointer", id_name=ptr, var_type=var_type)
+        ptr_to_casilla = table.get_ptr_v_add(ptr)
+
+        # quad that saves the v_add of the casilla to the pointer prev created
+        quad.insert("+", temp_v_add_2, ptr_to_base_v_add, ptr_to_casilla)
+
+        # return ptr
+        p[0] = (ptr, "ptr")
+
     else:
         p[0] = []
 
