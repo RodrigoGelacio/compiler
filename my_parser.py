@@ -5,6 +5,7 @@ from my_lexer import tokens
 from symbolTable import SymbolTable
 from Quad import Quad
 from cubo_semantico import ella_baila_sola
+from VirtualMachine import VirtualMachine
 
 ind_to_varStr = {0: "int", 1: "float", 2: "char", 3: "bool"}
 
@@ -23,11 +24,16 @@ precedence = (
 
 # program
 def p_program(p):
-    """program : PROGRAM ID SEMICOLON save_main_quad var_dec funcs main insert_global_size"""
+    """program : PROGRAM ID SEMICOLON save_main_quad var_dec funcs main insert_global_size execute"""
+
+def p_execute(p):
+    """execute : """
+    VirtualMachine().execute()
 
 def p_save_main_quad(p):
     """save_main_quad : """
-    quad.insert("GOTO", "MAIN","","")
+    quad.insert("ERA", "", "", "main")
+    quad.insert("GOTO", "","","")
     quad.save_jump()
 
 
@@ -64,7 +70,7 @@ def p_insert_params(p):
 
 def p_change_context_to_func(p):
     """change_context_to_func :"""
-    print("changing context to func")
+    # print("changing context to func")
     table.change_context(p[-1])
     table.insert("func", id_name=p[-1], return_type=p[-2])
 
@@ -148,16 +154,12 @@ def p_more_var_decs(p):
 
 # main
 def p_main(p):
-    """main : MAIN update_goto_main_quad change_context_to_main LP RP func_block insert_main_size"""
+    """main : MAIN update_goto_main_quad change_context_to_main LP RP func_block insert_func_size"""
 
 def p_update_goto_main_quad(p):
     """update_goto_main_quad : """
     curr_quad = quad.get_current_quad_index()
     quad.insert_direction_to_quad(curr_quad)
-
-def p_insert_main_size(p):
-    """insert_main_size : """
-    table.insert_main_size()
 
 
 def p_change_context_to_main(p):
@@ -192,7 +194,7 @@ def p_assignation(p):
     id_assignee, var_type_assignee, v_address_assignee= table.validate(identifier)
     id_expression, var_type_expression, v_address_expression= table.validate(expression)
 
-    print("ella baila sola: ", var_type_expression)
+    # print("ella baila sola: ", var_type_expression)
 
     if ella_baila_sola(var_type_assignee, var_type_expression, "=") == -1:
         raise ValueError(
@@ -210,7 +212,7 @@ def p_if_statement(p):
 def p_insert_go_to_false(p):
     """insert_go_to_false : """
     expression = p[-1]
-    print("THIS IS THE EXPRESSION: ", expression)
+    # print("THIS IS THE EXPRESSION: ", expression)
     _,_,v_add = table.validate(expression)
 
     quad.insert("GOTOF", v_add, "", "")
@@ -230,10 +232,10 @@ def p_insert_go_to(p):
 def p_else(p):
     """else : ELSE block
     | empty"""
-    if len(p) > 2:
-        curr_quad_index = quad.get_current_quad_index()
 
-        quad.insert_direction_to_quad(curr_quad_index)
+    curr_quad_index = quad.get_current_quad_index()
+
+    quad.insert_direction_to_quad(curr_quad_index)
 
 
 # while_statement

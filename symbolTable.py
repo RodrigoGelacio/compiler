@@ -19,6 +19,24 @@ class SymbolTable:
         self.__local_address = 10000
         self.__global_address = 0
 
+    def get_vars(self, func_id):
+        return self.symbols[func_id]["vars"]
+    
+    def get_temps(self, func_id):
+        return self.symbols[func_id]["temps"]
+
+    def get_ptrs(self):
+        return self.symbols["pointers"]
+
+    def get_globals(self):
+        return self.symbols["global"]["vars"]
+
+    def get_constants(self):
+        return self.symbols["constants"]
+    
+    def get_func_size(self, func_id):
+        return self.symbols[func_id]["size"]
+
     def get_current_ptr(self):
         return self.ptr_counter
 
@@ -26,7 +44,7 @@ class SymbolTable:
         return self.temp_counter
 
     def change_context(self, context):
-        print("changing context to: ", context)
+        # print("changing context to: ", context)
         self.current_context = context
     
     def get_ptr_v_add(self, ptr_id):
@@ -63,6 +81,8 @@ class SymbolTable:
                 self.symbols[self.current_context][key] = value
 
         elif insert_type == "constant":
+            # print("THIS IS THE CONSTNAT: ", kwargs["id_name"])
+            # print("THIS IS THE CONSTNAT type: ", type(kwargs["id_name"]))
             if not self.symbols["constants"][kwargs["id_name"]]:
                 self.symbols["constants"][kwargs["id_name"]]["v_address"] = self.__constant_address
                 self.__constant_address += 1
@@ -208,15 +228,12 @@ class SymbolTable:
         self.symbols[self.current_context]["size"] = func_vars + func_temp
 
     def insert_global_size(self):
+        self.change_context("global")
         self.symbols[self.current_context]["size"] = len(
             self.symbols[self.current_context]["vars"]
         )
 
-    def insert_main_size(self):
-        main_vars = len(self.symbols[self.current_context]["vars"])
-        temp_vars = len(self.symbols[self.current_context]["temps"])
 
-        self.symbols[self.current_context]["size"] = main_vars + temp_vars
 
     def is_it_already_declared(self, id_name):
         """Check whether the identifier has already been declared

@@ -17,13 +17,20 @@ parser = yacc.yacc(module=my_parser)
 
 ex = r"""
 program lol;
+int my_int;
 
 main(){
 
-    int i;
-    float j[5][6];
+    float f;
+    bool boo;
 
-    i = j[0][4];
+    f = 5 * 2.5;
+
+    if(f > 1){
+        f = f + 1;
+    }
+
+    print(f);
 }
 """
 
