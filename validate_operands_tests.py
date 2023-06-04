@@ -18,20 +18,11 @@ parser = yacc.yacc(module=my_parser)
 ex = r"""
 program lol;
 
-func int fact(int num){
-    int i;
-    if(num == 1){
-        return (1);
-    }
-
-    return (num * fact(num-1));
-}
-
 main(){
 
-    int i;
+    int i[5];
 
-    i = fact(5);
+    i[3] = 1 + i[4];
 
     print(i);
 

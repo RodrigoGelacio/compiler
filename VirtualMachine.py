@@ -267,8 +267,8 @@ class VirtualMachine:
 
         last_quad = len(self.__quads)
 
-        while self.__instruction_pointer < last_quad:
-            self.execute_quad()
+        # while self.__instruction_pointer < last_quad:
+        #     self.execute_quad()
         # self.memory.print_memory()
 
     def get_var_type(self, value):
@@ -389,6 +389,9 @@ class VirtualMachine:
         elif operation == "ENDPROCMAIN":
             self.memory.kill_function()
             self.__instruction_pointer += 1
+
+        elif operation == "VER":
+            
 
         elif operation == "=":
             left_op_value = self.memory.get_value(left_op)
