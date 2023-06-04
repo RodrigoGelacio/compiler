@@ -19,7 +19,7 @@ program lol;
 main(){
 
     for(int c=3; c < 5){
-        
+        print(c);
     }
 
 }

@@ -402,6 +402,7 @@ def p_statements(p):
     """statements : assignation
     | if_statement
     | while_statement
+    | for_loop
     | read
     | func_call SEMICOLON
     | return
@@ -409,6 +410,37 @@ def p_statements(p):
     | empty"""
 
     p[0] = p[1]
+
+def p_for_loop(p):
+    """for_loop : FOR LP for_var_dec save_exp_start_direction SEMICOLON exp insert_go_to_false RP block add_one_to_control insert_go_to_while"""
+
+def p_for_var_dec(p):
+    """for_var_dec : INT_TYPE ID EQUAL_ASS INT_NUMBER """
+
+    var_type = p[1]
+    var_id = p[2]
+    const = p[4]
+
+    if table.is_it_already_declared(var_id):
+        raise ValueError(f"{var_id} already declared")
+
+    table.insert("var", id_name=var_id, var_type=var_type)
+    table.insert("constant", id_name=const)
+
+    const_v_add = table.get_virtual_add_const(const)
+    _,_,var_v_add = table.validate((var_id, "_"))
+
+    quad.insert("=",const_v_add,"",var_v_add)
+
+    p[0] = var_id
+
+def p_add_one_to_control(p):
+    """add_one_to_control : """
+    table.insert("constant", id_name=1)
+    _,_,control_var_v_add = table.validate((p[-7], "_"))
+    one_v_add = table.get_virtual_add_const(1)
+
+    quad.insert("+", one_v_add, control_var_v_add, control_var_v_add)
 
 
 def p_print(p):
