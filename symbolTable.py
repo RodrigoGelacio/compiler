@@ -20,6 +20,27 @@ class SymbolTable:
         self.__local_address = 10000
         self.__global_address = 0
 
+    def get_return_type_func(self, func_id):
+        return self.symbols[func_id]["return_type"]
+
+    def get_func_var_dims(self, func_id, var_id):
+        dimensions = self.symbols[func_id]["vars"][var_id].get("dimensions", {})
+        return dimensions
+
+    def get_func_true_size(self, func_id):
+        func_vars = self.symbols[func_id]["vars"]
+
+        true_size = self.symbols[func_id]["size"]
+
+        for key in func_vars.keys():
+            # print("THIS IS THE KEY: ", key)
+            dimensions = func_vars[key].get("dimensions", {})
+            if dimensions:
+                cells = math.prod(func_vars[key]["dimensions"])
+                true_size += cells - 1
+
+        return true_size
+
     def get_param_v_add(self, func_id, index):
         return self.symbols[func_id]["param_v_add"][index]
     

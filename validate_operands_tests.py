@@ -2,10 +2,8 @@ import ply.lex as lex
 import ply.yacc as yacc
 import my_lexer
 import my_parser
-from syntax_test_data import true_positive_tests, true_negative_tests
 from symbolTable import SymbolTable
 from Quad import Quad
-from cubo_semantico import ella_baila_sola
 
 quads = Quad()
 
@@ -17,14 +15,20 @@ parser = yacc.yacc(module=my_parser)
 
 ex = r"""
 program lol;
+int i[2][2];
+
+func void hola(){
+    int j[8][7];
+
+    j[3][1] = 90.8;
+
+    print(j[3][1]);
+ 
+}
 
 main(){
 
-    int i[5];
-
-    i[3] = 1 + i[4];
-
-    print(i);
+    hola();
 
 }
 """

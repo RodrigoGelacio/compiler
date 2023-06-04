@@ -18,7 +18,7 @@ class LocalMemory:
     def __init__(self, func_id):
         self.__local = []
 
-        size = table.get_func_size(func_id)
+        size = table.get_func_true_size(func_id)
 
         for _ in range(size):
             self.__local.append(None)
@@ -31,9 +31,23 @@ class LocalMemory:
                 var_type = loc_vars[key]["var_type"]
                 if var_type == "int":
                     self.__local[loc_vars[key]["v_address"] - local_base] = 0
+
+                    dims = table.get_func_var_dims(func_id, key)
+
+                    if dims:
+                        total_cells = math.prod(dims)
+                        for i,_ in enumerate(range(total_cells-1)):
+                            self.__local[(i+1) + loc_vars[key]["v_address"] - local_base] = 0
                 
                 elif var_type == "float":
                     self.__local[loc_vars[key]["v_address"] - local_base] = 1.5
+
+                    dims = table.get_func_var_dims(func_id, key)
+
+                    if dims:
+                        total_cells = math.prod(dims)
+                        for i,_ in enumerate(range(total_cells-1)):
+                            self.__local[(i+1) + loc_vars[key]["v_address"] - local_base] = 0.0
                 
                 elif var_type == "bool":
                     self.__local[loc_vars[key]["v_address"] - local_base] = False
@@ -198,6 +212,10 @@ class Memory:
         else:
             rel_address = v_address - ptr_base
             return self.get_value(self.__pointers[rel_address])
+        
+    def assign_value_ptr(self, v_address, value):
+        rel_addres = v_address - ptr_base
+        self.__pointers[rel_addres] = value
     
     def assign_value(self, v_address, value):
         if v_address < 10000:
@@ -215,7 +233,8 @@ class Memory:
         
         else:
             rel_addres = v_address - ptr_base
-            self.assign_value(rel_addres, value)
+            self.assign_value(self.__pointers[rel_addres], value)
+
 
     def print_memory(self):
         
@@ -265,10 +284,12 @@ class VirtualMachine:
         for i, quad in enumerate(self.__quads):
             print(f"{i}: {quad}")
 
+        # table.print_symbols()
+
         last_quad = len(self.__quads)
 
-        # while self.__instruction_pointer < last_quad:
-        #     self.execute_quad()
+        while self.__instruction_pointer < last_quad:
+            self.execute_quad()
         # self.memory.print_memory()
 
     def get_var_type(self, value):
@@ -391,10 +412,21 @@ class VirtualMachine:
             self.__instruction_pointer += 1
 
         elif operation == "VER":
-            
+            index = self.memory.get_value(left_op)
+            lower_bound = self.memory.get_value(right_op)
+            top_bound = self.memory.get_value(result)
+
+            if index >= lower_bound and index < top_bound:
+                self.__instruction_pointer += 1
+                print(f"VER -> {self.__instruction_pointer}")
+            else:
+                raise Exception("Trying to access out of bounds index")
+
 
         elif operation == "=":
             left_op_value = self.memory.get_value(left_op)
+            table.print_symbols()
+            self.memory.print_memory()
             result_value = self.memory.get_value(result)
 
             left_op_type = self.get_var_type(left_op_value)
@@ -415,8 +447,6 @@ class VirtualMachine:
 
             else:
                 final_result = left_op_value
-
-
             self.memory.assign_value(result, final_result)
             self.__instruction_pointer += 1
 
@@ -469,6 +499,33 @@ class VirtualMachine:
             self.memory.assign_value(result, final_result)
             self.__instruction_pointer += 1
 
+        elif operation == "+s":
+            left_op_value = self.memory.get_value(left_op)
+            right_op_value = self.memory.get_value(right_op)
+
+            left_var_type = self.get_var_type(left_op_value)
+            right_var_type = self.get_var_type(right_op_value)
+
+            ind = ella_baila_sola(left_var_type, right_var_type, "+")
+
+            if ind == -1:
+                raise Exception(f"'{left_op_type}' not compatible with '{result_type}' on +")
+
+            return_type = ind_to_varStr[ind]
+            
+            if return_type == "int":
+                final_result = int(left_op_value+right_op_value)
+
+            elif return_type == "float":
+                final_result = float(left_op_value+right_op_value)
+
+            self.memory.assign_value_ptr(result, final_result)
+
+            self.__instruction_pointer += 1
+
+            print(f"+s -> {self.__instruction_pointer}")
+
+
         elif operation == "+":
             left_op_value = self.memory.get_value(left_op)
             right_op_value = self.memory.get_value(right_op)
@@ -490,7 +547,10 @@ class VirtualMachine:
                 final_result = float(left_op_value+right_op_value)
 
             self.memory.assign_value(result, final_result)
+
             self.__instruction_pointer += 1
+
+            print(f"+ -> {self.__instruction_pointer}")
 
         elif operation == "-":
             left_op_value = self.memory.get_value(left_op)
@@ -516,6 +576,8 @@ class VirtualMachine:
 
             self.memory.assign_value(result, left_op_value - right_op_value)
             self.__instruction_pointer += 1
+
+            print(f"- -> {self.__instruction_pointer}")
         
         elif operation == "==":
             self.debug += 1
@@ -552,6 +614,8 @@ class VirtualMachine:
 
             self.memory.assign_value(result, control)
             self.__instruction_pointer += 1
+
+            print(f"== -> {self.__instruction_pointer}")
 
         elif operation == "<":
             left_op_value = self.memory.get_value(left_op)

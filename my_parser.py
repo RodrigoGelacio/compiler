@@ -51,7 +51,8 @@ def p_funcs(p):
 
 def p_insert_parche_guada(p):
     """insert_parche_guada : """
-    table.insert("return", var_type=p[-3])
+    if p[-3] != "void":
+        table.insert("return", var_type=p[-3])
 
 def p_insert_endproc_quad(p):
     """insert_endproc_quad :"""
@@ -358,22 +359,26 @@ def p_func_call(p):
     # GOSUB quadruple
     quad.insert("GOSUB", "", "", init_func_quad)
 
-    var_type = table.validate_return_function(func_name)
+    return_func_type = table.get_return_type_func(func_name)
 
-    temp = "t" + str(table.get_current_temp())
-    # temp
-    # print("what temp: ", temp)
-    table.insert(
-        "temp",
-        id_name=temp,
-        var_type=var_type,
-    )
+    if return_func_type != "void":
 
-    _, _, v_address = table.validate((temp, 0))
-    func_var_v_address = table.get_func_var_v_address(func_name)
-    quad.insert("=", func_var_v_address, "", v_address)
+        var_type = table.validate_return_function(func_name)
 
-    p[0] = (temp, 0)
+        temp = "t" + str(table.get_current_temp())
+        # temp
+        # print("what temp: ", temp)
+        table.insert(
+            "temp",
+            id_name=temp,
+            var_type=var_type,
+        )
+
+        _, _, v_address = table.validate((temp, 0))
+        func_var_v_address = table.get_func_var_v_address(func_name)
+        quad.insert("=", func_var_v_address, "", v_address)
+
+        p[0] = (temp, 0)
 
 
 def p_make_ERA_quad(p):
@@ -598,7 +603,7 @@ def p_exp_dim_opt(p):
         # get v_add of pointer that pointing towards the casilla
         casilla_ptr = table.get_ptr_v_add(ptr)
 
-        quad.insert("+", index_v_add, ptr_to_base_v_add, casilla_ptr)
+        quad.insert("+s", index_v_add, ptr_to_base_v_add, casilla_ptr)
 
         p[0] = (ptr, "ptr")
     elif len(p) > 4:
@@ -652,7 +657,7 @@ def p_exp_dim_opt(p):
         ptr_to_casilla = table.get_ptr_v_add(ptr)
 
         # quad that saves the v_add of the casilla to the pointer prev created
-        quad.insert("+", temp_v_add_2, ptr_to_base_v_add, ptr_to_casilla)
+        quad.insert("+s", temp_v_add_2, ptr_to_base_v_add, ptr_to_casilla)
 
         # return ptr
         p[0] = (ptr, "ptr")
