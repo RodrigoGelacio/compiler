@@ -15,20 +15,12 @@ parser = yacc.yacc(module=my_parser)
 
 ex = r"""
 program lol;
-int i[2][2];
-
-func void hola(){
-    int j[8][7];
-
-    j[3][1] = 90.8;
-
-    print(j[3][1]);
- 
-}
 
 main(){
 
-    hola();
+    for(int c=3; c < 5){
+        
+    }
 
 }
 """

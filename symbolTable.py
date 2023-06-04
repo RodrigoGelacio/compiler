@@ -33,7 +33,6 @@ class SymbolTable:
         true_size = self.symbols[func_id]["size"]
 
         for key in func_vars.keys():
-            # print("THIS IS THE KEY: ", key)
             dimensions = func_vars[key].get("dimensions", {})
             if dimensions:
                 cells = math.prod(func_vars[key]["dimensions"])
@@ -50,7 +49,6 @@ class SymbolTable:
         true_size = self.symbols["global"]["size"]
 
         for key in glob_vars.keys():
-            # print("THIS IS THE KEY: ", key)
             dimensions = glob_vars[key].get("dimensions", {})
             if dimensions:
                 cells = math.prod(glob_vars[key]["dimensions"])
@@ -87,7 +85,6 @@ class SymbolTable:
         return self.temp_counter
 
     def change_context(self, context):
-        # print("changing context to: ", context)
         self.current_context = context
     
     def get_ptr_v_add(self, ptr_id):
@@ -132,7 +129,6 @@ class SymbolTable:
 
 
         elif insert_type == "constant":
-            # print("THIS IS THE KEY: ", kwargs["id_name"])
             if isinstance(kwargs["id_name"], bool):
                     kwargs["id_name"] = str(kwargs["id_name"])
 
@@ -343,8 +339,6 @@ class SymbolTable:
         if self.symbols[function_name]["return_type"] == "void":
             return self.symbols[function_name]["return_type"]
         glob_func_name = "_" + function_name
-        # print("THIS IS THE QUERY: ", glob_func_name)
-        # self.print_symbols()
         if self.symbols["global"]["vars"][glob_func_name]:
             ret_type = self.symbols["global"]["vars"][glob_func_name]["var_type"]
             return ret_type
@@ -362,8 +356,6 @@ class SymbolTable:
                 1 - primitive var_type
                 2 - virtual address
         """
-        # self.print_symbols()
-        # print("this is printing: ", identifier)
         if isinstance(identifier, tuple) and identifier[1] == 0:
             id_name, _ = identifier
             is_valid, var_type, v_address = self.__validate("temps", id_name)
@@ -394,7 +386,6 @@ class SymbolTable:
             return identifier, var_type, v_address
     
     def get_constant_type(self, constant):
-        # print("LOOOLAZOO", constant)
         if isinstance(constant, bool):
             return "bool"
         elif isinstance(constant, int):
@@ -421,8 +412,6 @@ class SymbolTable:
             Return:
                 virtual address: int
         """
-        # print("SEARCHED CONSTANT: ", constant)
-
         return self.symbols["constants"][constant]["v_address"]
 
     def __validate(self, type_var, id_name):

@@ -80,7 +80,6 @@ def p_insert_params(p):
 
 def p_change_context_to_func(p):
     """change_context_to_func :"""
-    # print("changing context to func")
     table.change_context(p[-1])
     table.insert("func", id_name=p[-1], return_type=p[-2])
 
@@ -248,14 +247,10 @@ def p_assignation(p):
     identifier = p[1]
     expression = p[3]
 
-    # print("this is the result of the exp: ", expression)
-
     id_assignee, var_type_assignee, v_address_assignee = table.validate(identifier)
     id_expression, var_type_expression, v_address_expression = table.validate(
         expression
     )
-
-    # print("ella baila sola: ", var_type_expression)
 
     if ella_baila_sola(var_type_assignee, var_type_expression, "=") == -1:
         raise ValueError(
@@ -273,11 +268,8 @@ def p_if_statement(p):
 def p_insert_go_to_false(p):
     """insert_go_to_false :"""
     expression = p[-1]
-    # print("THIS IS THE EXPRESSION: ", expression)
     _, _, v_add = table.validate(expression)
-
     quad.insert("GOTOF", v_add, "", "")
-
     quad.save_jump()
 
 
@@ -366,8 +358,6 @@ def p_func_call(p):
         var_type = table.validate_return_function(func_name)
 
         temp = "t" + str(table.get_current_temp())
-        # temp
-        # print("what temp: ", temp)
         table.insert(
             "temp",
             id_name=temp,
@@ -482,22 +472,6 @@ def p_return(p):
     func_var_v_address = table.get_func_var_v_address(func_name)
     quad.insert("RETURN", func_var_v_address, "", v_address)
 
-    # _, var_type, dim= table.validate(exp)
-
-    # temp = "temp" + str(table.get_current_temp())
-    # table.increase_temp_counter()
-
-    # context = table.get_current_context()
-
-    # table.insert(
-    #         "temp",
-    #         id_name=temp,
-    #         var_type=var_type,
-    #         dimensions=dim,
-    #     )
-    # quad.insert("=", context,"", f"temp{temp}")
-    # print("This is returningggg: ", temp)
-
 
 # arithmetic expression
 def p_expression_arithmetic(p):
@@ -519,12 +493,9 @@ def p_expression_arithmetic(p):
     right_op = p[3]
     operation = p[2]
 
-    # print(f"Iteration: {operation}, {left_op}, {right_op}")
-
     left_op, type_left_operand, left_op_v_add = table.validate(left_op)
     right_op, type_right_operand, right_op_v_add = table.validate(right_op)
 
-    # print(f"Ella baila sola valores: {left_operand}, {right_operand}")
     ind_var_type = ella_baila_sola(type_left_operand, type_right_operand, operation)
     if ind_var_type == -1:
         raise ValueError(
@@ -532,8 +503,6 @@ def p_expression_arithmetic(p):
         )
     else:
         temp = "t" + str(table.get_current_temp())
-        # print("what temp: ", temp)
-        # temp
         table.insert(
             "temp",
             id_name=temp,

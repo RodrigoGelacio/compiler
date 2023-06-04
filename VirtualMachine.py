@@ -57,13 +57,10 @@ class LocalMemory:
 
                 else:
                     raise Exception(f"What type of variable is this?: '{key}'")
-        # print(self.__local)
-        # print(loc_temps)
         if len(loc_temps) != 0:
             for key in loc_temps.keys():
                 var_type = loc_temps[key]["var_type"]
                 if var_type == "int":
-                    # print(loc_temps[key]["v_address"])
                     self.__local[loc_temps[key]["v_address"] - local_base] = 0
                 
                 elif var_type == "float":
@@ -170,10 +167,7 @@ class Memory:
         for i in range(const_size):
             self.__constants.append(None)
 
-        # table.print_symbols()
         for const in constants.keys():
-            # print(const)
-            # print("Type: ", type(const))
             rel_v_add = constants[const]["v_address"] - constant_base
             if isinstance(const, str) and len(const) > 3:
                 if const == "True":
@@ -186,10 +180,7 @@ class Memory:
         self.__local.push(LocalMemory(func_id))
 
     def push_local_memory_to_stack_segment(self, localMemory):
-        # print("CHECK HEEERE")
-        # localMemory.print_local_memory()
         self.__local.push(localMemory)
-        # self.__local.top().print_local_memory()
     
     def get_value(self, v_address):
         if v_address < 10000:
@@ -198,11 +189,6 @@ class Memory:
         
         if v_address < 20000:
             rel_address = v_address - local_base
-            # print("this is at the top")
-            # self.__local.pop()
-            # lol = self.__local.top()
-            # lol.print_local_memory()
-            # raise Exception("lloooll")
             return self.__local.top().get_value_with_address(rel_address)
         
         if v_address < 30000:
@@ -222,9 +208,7 @@ class Memory:
             self.__global[v_address] = value
         
         elif v_address < 20000:
-            # print("V_ADDRESS: ", v_address)
             rel_address = v_address - local_base
-            # print("REL ADD: ", rel_address)
             self.__local.top().get_curr_memory()[rel_address] = value
 
         elif v_address < 30000:
@@ -279,21 +263,12 @@ class VirtualMachine:
         self.memory.load_global()
         self.memory.load_pointers()
 
-        # print("EXECUTE")
-        # table.print_symbols()
-        for i, quad in enumerate(self.__quads):
-            print(f"{i}: {quad}")
-
-        # table.print_symbols()
-
         last_quad = len(self.__quads)
 
         while self.__instruction_pointer < last_quad:
             self.execute_quad()
-        # self.memory.print_memory()
 
     def get_var_type(self, value):
-        # print("VALUE: ", value)
         if isinstance(value, int):
             return "int"
 
@@ -316,12 +291,9 @@ class VirtualMachine:
         operation, left_op, right_op, result = self.__quads[self.__instruction_pointer]
 
         if operation == "ERA":
-            # self.memory.push_to_stack_segment(result)
             self.pending_local_memory = LocalMemory(result)
             self.__instruction_pointer += 1
             print(f"ERA -> {self.__instruction_pointer}")
-            # self.memory.print_memory()
-            # self.__instruction_pointer == len(self.__quads)
 
         elif operation == "ERAMAIN":
             self.memory.push_to_stack_segment(result)
@@ -348,26 +320,14 @@ class VirtualMachine:
             else:
                 self.__instruction_pointer = result
 
-            # if self.debug == 5:
-            #     print(f"controlllll? : {control_var}")
-            #     print(f"GOTOF -> {self.__instruction_pointer}")
-            #     raise Exception("MAYBE?")
 
         elif operation == "RETURN":
           return_value = self.memory.get_value(result)
-        #   if self.debug == 5:
-        #         print(f"this is returning? : {return_value}")
-        #         print(f"v_add: {left_op}")
-        #         table.print_symbols()
-        #         raise Exception("MAYBE?")
           self.memory.assign_value(left_op, return_value)
 
           self.memory.kill_function()
           migaja = self.__migajaStack.pop()
           self.__instruction_pointer = migaja
-        #   self.__instruction_pointer += 1
-
-          
           print(f"RETURN -> {self.__instruction_pointer}")
 
         elif operation == "PARAM":
@@ -383,22 +343,15 @@ class VirtualMachine:
 
             self.insert_in_pending_local_memory(result, left_op_value)
 
-            # self.pending_local_memory.print_local_memory()
             self.__instruction_pointer += 1
             print(f"PARAM -> {self.__instruction_pointer}")
-            # self.__instruction_pointer = len(self.__quads)
         
         elif operation == "GOSUB":
-            # print("BEFORE")
-            # self.memory.print_memory()
             self.memory.push_local_memory_to_stack_segment(self.pending_local_memory)
-            # print("AFTER")
-            # self.memory.print_memory()
             self.__migajaStack.push(self.__instruction_pointer + 1)
             self.__instruction_pointer = result
             print(f"GOSUB -> {self.__instruction_pointer}")
 
-            # self.__instruction_pointer = len(self.__quads)
 
         elif operation == "ENDPROC":
             # raise Exception("we did it!")
@@ -425,8 +378,6 @@ class VirtualMachine:
 
         elif operation == "=":
             left_op_value = self.memory.get_value(left_op)
-            table.print_symbols()
-            self.memory.print_memory()
             result_value = self.memory.get_value(result)
 
             left_op_type = self.get_var_type(left_op_value)
@@ -596,21 +547,11 @@ class VirtualMachine:
             
             if return_type != "bool":
                 raise Exception("Should be boolean")
-            # table.print_symbols()
-            # self.memory.print_memory()
-            # print(f"v_add of left_op: {left_op}")
-            # if self.debug == 5:
-            #     print(f"comparing: {left_op_value} == {right_op_value}")
-            #     print(f"type: {left_var_type} == {right_var_type}")
-            #     raise Exception("MAYBE?")
+            
             if left_op_value == right_op_value:
                 control = True
             else:
                 control = False
-            
-            # if self.debug == 5:
-            #     print(f"control? : {control}")
-            #     raise Exception("MAYBE?")
 
             self.memory.assign_value(result, control)
             self.__instruction_pointer += 1
@@ -717,15 +658,3 @@ class VirtualMachine:
 
             self.memory.assign_value(result, control)
             self.__instruction_pointer += 1
-
-        
-        
-
-
-        
-        
-        
-
-
-
-    # def load_global_memory(self):
