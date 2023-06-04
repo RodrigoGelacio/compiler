@@ -1,0 +1,47 @@
+program lol;
+int my_arr[5];
+
+func void print_arr(){
+
+    for(int i=0; i < 5){
+        print(my_arr[i]);
+    }
+
+}
+
+func void sort_array(){
+    int swaps;
+    int aux;
+
+    swaps = 1;
+
+    while(swaps > 0){
+        swaps = 0;
+        for(int i=0; i < 4){
+            if(my_arr[i] > my_arr[i+1]){
+                aux = my_arr[i+1];
+                my_arr[i+1] = my_arr[i];
+                my_arr[i] = aux;
+                swaps = swaps + 1;
+            }
+        }
+    }
+}
+
+main(){
+
+    my_arr[0] = 5;
+    my_arr[1] = 4;
+    my_arr[2] = 3;
+    my_arr[3] = 2;
+    my_arr[4] = 1;
+
+    print_arr();
+
+    sort_array();
+
+    print();
+
+    print_arr();
+
+}

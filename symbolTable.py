@@ -170,7 +170,7 @@ class SymbolTable:
                 name_id: str, name of dim variable
 
             Return:
-                list(int): list of sizes of dimensios
+                tuple(3): v_add, dims, type
         """
         #check for gloabl context alsoooooo
 

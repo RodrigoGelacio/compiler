@@ -15,7 +15,8 @@ reserved = {
     "float": "FLOAT_TYPE",
     "char": "CHAR_TYPE",
     "bool": "BOOL_TYPE",
-    "for": "FOR"
+    "for": "FOR",
+    "plot": "PLOT"
 }
 
 tokens = [

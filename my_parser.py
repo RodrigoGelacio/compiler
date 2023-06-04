@@ -6,6 +6,7 @@ from symbolTable import SymbolTable
 from Quad import Quad
 from cubo_semantico import ella_baila_sola
 from VirtualMachine import VirtualMachine
+import math
 
 ind_to_varStr = {0: "int", 1: "float", 2: "char", 3: "bool"}
 
@@ -407,6 +408,7 @@ def p_statements(p):
     | func_call SEMICOLON
     | return
     | print
+    | plot
     | empty"""
 
     p[0] = p[1]
@@ -446,8 +448,12 @@ def p_add_one_to_control(p):
 def p_print(p):
     """print : PRINT LP print_args RP SEMICOLON"""
 
-    _, _, v_address = table.validate(p[3])
-    quad.insert("PRINT", "", "", v_address)
+    if p[3] != None:
+        _, _, v_address = table.validate(p[3])
+        quad.insert("PRINT", "", "", v_address)
+    
+    else:
+        quad.insert("PRINT", "", "", -1)
 
 
 def p_print_args(p):
@@ -558,6 +564,20 @@ def p_expression_final(p):
         p[0] = p[2]
     else:
         p[0] = p[1]
+
+def p_plot(p):
+    """plot : PLOT LP ID COMMA ID RP SEMICOLON"""
+
+    x_id,_,x_v_add = table.validate((p[3], "_"))
+    y_id,_,y_v_add = table.validate((p[5], "_"))
+
+    _,x_dims,_ = table.get_dim_var_info(x_id)
+    _,y_dims,_ = table.get_dim_var_info(y_id)
+
+    x_size = math.prod(x_dims)
+    y_size = math.prod(y_dims)
+
+    quad.insert("PLOT",(x_v_add, x_size), (y_v_add, y_size), "")
 
 
 # var_usage

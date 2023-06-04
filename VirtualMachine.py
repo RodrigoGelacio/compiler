@@ -3,6 +3,7 @@ from Quad import Quad
 from Stack import Stack
 from cubo_semantico import ella_baila_sola
 import math
+import matplotlib.pyplot as plt
 
 ind_to_varStr = {0: "int", 1: "float", 2: "char", 3: "bool"}
 
@@ -85,6 +86,12 @@ class LocalMemory:
     def print_local_memory(self):
         for i, elem in enumerate(self.__local):
             print(f"{i}: {elem}")
+    def get_array(self, base_arr_v_address, arr_size):
+        array = []
+        for i in range(arr_size):
+            array.append(self.__local[base_arr_v_address+i])
+        
+        return array
 
 class Memory:
     def __init__(self):
@@ -118,6 +125,18 @@ class Memory:
 
                 else:
                     raise Exception(f"What type of variable is this?: '{key}'")
+    def get_whole_array(self, base_arr_v_address, arr_size):
+        if base_arr_v_address < 10000:
+            rel_address = base_arr_v_address
+            array = []
+            for i in range(arr_size):
+                array.append(self.__global[rel_address + i])
+            return array
+        
+        if base_arr_v_address < 20000:
+            rel_address = base_arr_v_address - local_base
+            return self.__local.top().get_array(rel_address, arr_size)
+
     def kill_function(self):
         self.__local.pop()
 
@@ -293,21 +312,23 @@ class VirtualMachine:
         if operation == "ERA":
             self.pending_local_memory = LocalMemory(result)
             self.__instruction_pointer += 1
-            print(f"ERA -> {self.__instruction_pointer}")
+            # print(f"ERA -> {self.__instruction_pointer}")
 
         elif operation == "ERAMAIN":
             self.memory.push_to_stack_segment(result)
             self.__instruction_pointer += 1
-            print(f"ERAMAIN -> {self.__instruction_pointer}")
+            # print(f"ERAMAIN -> {self.__instruction_pointer}")
         
         elif operation == "GOTO":
             self.__instruction_pointer = result
-            print(f"GOTO -> {self.__instruction_pointer}")
+            # print(f"GOTO -> {self.__instruction_pointer}")
 
         elif operation == "PRINT":
-            value_to_print = self.memory.get_value(result)
-            print("ESTO SE DEBERIA DE PRINTEAR")
-            print(value_to_print)
+            if result == -1:
+                print()
+            else:
+                value_to_print = self.memory.get_value(result)
+                print(value_to_print)
             self.__instruction_pointer += 1
 
         
@@ -328,7 +349,7 @@ class VirtualMachine:
           self.memory.kill_function()
           migaja = self.__migajaStack.pop()
           self.__instruction_pointer = migaja
-          print(f"RETURN -> {self.__instruction_pointer}")
+        #   print(f"RETURN -> {self.__instruction_pointer}")
 
         elif operation == "PARAM":
             left_op_value = self.memory.get_value(left_op)
@@ -344,13 +365,13 @@ class VirtualMachine:
             self.insert_in_pending_local_memory(result, left_op_value)
 
             self.__instruction_pointer += 1
-            print(f"PARAM -> {self.__instruction_pointer}")
+            # print(f"PARAM -> {self.__instruction_pointer}")
         
         elif operation == "GOSUB":
             self.memory.push_local_memory_to_stack_segment(self.pending_local_memory)
             self.__migajaStack.push(self.__instruction_pointer + 1)
             self.__instruction_pointer = result
-            print(f"GOSUB -> {self.__instruction_pointer}")
+            # print(f"GOSUB -> {self.__instruction_pointer}")
 
 
         elif operation == "ENDPROC":
@@ -358,7 +379,7 @@ class VirtualMachine:
             self.memory.kill_function()
             migaja = self.__migajaStack.pop()
             self.__instruction_pointer = migaja
-            print(f"ENDPROC -> {self.__instruction_pointer}")
+            # print(f"ENDPROC -> {self.__instruction_pointer}")
 
         elif operation == "ENDPROCMAIN":
             self.memory.kill_function()
@@ -371,9 +392,20 @@ class VirtualMachine:
 
             if index >= lower_bound and index < top_bound:
                 self.__instruction_pointer += 1
-                print(f"VER -> {self.__instruction_pointer}")
             else:
                 raise Exception("Trying to access out of bounds index")
+            
+        elif operation == "PLOT":
+            x_v_add, x_size = left_op
+            y_v_add, y_size = right_op
+
+            x_list = self.memory.get_whole_array(x_v_add, x_size)
+            y_list = self.memory.get_whole_array(y_v_add, y_size)
+
+            plt.plot(x_list, y_list)
+            plt.show()
+
+            self.__instruction_pointer += 1
 
 
         elif operation == "=":
@@ -474,7 +506,6 @@ class VirtualMachine:
 
             self.__instruction_pointer += 1
 
-            print(f"+s -> {self.__instruction_pointer}")
 
 
         elif operation == "+":
@@ -501,7 +532,6 @@ class VirtualMachine:
 
             self.__instruction_pointer += 1
 
-            print(f"+ -> {self.__instruction_pointer}")
 
         elif operation == "-":
             left_op_value = self.memory.get_value(left_op)
@@ -528,7 +558,6 @@ class VirtualMachine:
             self.memory.assign_value(result, left_op_value - right_op_value)
             self.__instruction_pointer += 1
 
-            print(f"- -> {self.__instruction_pointer}")
         
         elif operation == "==":
             self.debug += 1
@@ -556,7 +585,6 @@ class VirtualMachine:
             self.memory.assign_value(result, control)
             self.__instruction_pointer += 1
 
-            print(f"== -> {self.__instruction_pointer}")
 
         elif operation == "<":
             left_op_value = self.memory.get_value(left_op)
