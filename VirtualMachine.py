@@ -2,6 +2,7 @@ from symbolTable import SymbolTable
 from Quad import Quad
 from Stack import Stack
 from cubo_semantico import ella_baila_sola
+import math
 
 ind_to_varStr = {0: "int", 1: "float", 2: "char", 3: "bool"}
 
@@ -42,12 +43,14 @@ class LocalMemory:
 
                 else:
                     raise Exception(f"What type of variable is this?: '{key}'")
-        
+        # print(self.__local)
+        # print(loc_temps)
         if len(loc_temps) != 0:
             for key in loc_temps.keys():
                 var_type = loc_temps[key]["var_type"]
                 if var_type == "int":
-                    self.__local[loc_temps[key]["v_address"] - loc_temps] = 0
+                    # print(loc_temps[key]["v_address"])
+                    self.__local[loc_temps[key]["v_address"] - local_base] = 0
                 
                 elif var_type == "float":
                     self.__local[loc_temps[key]["v_address"] - local_base] = 1.5
@@ -62,10 +65,15 @@ class LocalMemory:
                     raise Exception(f"What type of variable is this?: '{key}'")
 
 
-
+    def get_value_with_address(self, address):
+        return self.__local[address]
     
     def get_curr_memory(self):
         return self.__local
+    
+    def print_local_memory(self):
+        for i, elem in enumerate(self.__local):
+            print(f"{i}: {elem}")
 
 class Memory:
     def __init__(self):
@@ -99,11 +107,13 @@ class Memory:
 
                 else:
                     raise Exception(f"What type of variable is this?: '{key}'")
+    def kill_function(self):
+        self.__local.pop()
 
     def load_global(self):
         global_var = table.get_globals()
 
-        global_size = len(global_var)
+        global_size = table.get_globals_true_size()
 
         for _ in range(global_size):
             self.__global.append(None)
@@ -113,9 +123,21 @@ class Memory:
                 var_type = global_var[key]["var_type"]
                 if var_type == "int":
                     self.__global[global_var[key]["v_address"] - global_base] = 0
-                
+                    dims = table.get_global_var_dims(key)
+
+                    if dims:
+                        total_cells = math.prod(dims)
+                        for i,_ in enumerate(range(total_cells-1)):
+                            self.__global[(i+1) + global_var[key]["v_address"] - global_base] = 0
+
                 elif var_type == "float":
                     self.__global[global_var[key]["v_address"] - global_base] = 1.5
+                    dims = table.get_global_var_dims(key)
+
+                    if dims:
+                        total_cells = math.prod(dims)
+                        for i,_ in enumerate(range(total_cells-1)):
+                            self.__global[(i+1) + global_var[key]["v_address"] - global_base] = 1.5
                 
                 elif var_type == "bool":
                     self.__global[global_var[key]["v_address"] - global_base] = False
@@ -134,12 +156,26 @@ class Memory:
         for i in range(const_size):
             self.__constants.append(None)
 
+        # table.print_symbols()
         for const in constants.keys():
+            # print(const)
+            # print("Type: ", type(const))
             rel_v_add = constants[const]["v_address"] - constant_base
+            if isinstance(const, str) and len(const) > 3:
+                if const == "True":
+                    const = True
+                else:
+                    const = False
             self.__constants[rel_v_add] = const
     
     def push_to_stack_segment(self, func_id):
         self.__local.push(LocalMemory(func_id))
+
+    def push_local_memory_to_stack_segment(self, localMemory):
+        # print("CHECK HEEERE")
+        # localMemory.print_local_memory()
+        self.__local.push(localMemory)
+        # self.__local.top().print_local_memory()
     
     def get_value(self, v_address):
         if v_address < 10000:
@@ -148,7 +184,12 @@ class Memory:
         
         if v_address < 20000:
             rel_address = v_address - local_base
-            return self.__local.top().get_curr_memory()[rel_address]
+            # print("this is at the top")
+            # self.__local.pop()
+            # lol = self.__local.top()
+            # lol.print_local_memory()
+            # raise Exception("lloooll")
+            return self.__local.top().get_value_with_address(rel_address)
         
         if v_address < 30000:
             rel_address = v_address - constant_base
@@ -191,21 +232,28 @@ class Memory:
             print(f"{i}: {elem}")
 
         print("<--------- Local --------->")
+        aux_stack = Stack()
         while not self.__local.is_empty():
             curr_mem = self.__local.pop()
+            aux_stack.push(curr_mem)
             curr_mem_list = curr_mem.get_curr_memory()
 
             print("<--- Level ---->")
             for i, elem in enumerate(curr_mem_list):
                 print(f"{i}: {elem}")
-
+        
+        while not aux_stack.is_empty():
+            self.__local.push(aux_stack.pop())
 
 
 class VirtualMachine:
     def __init__(self):
         self.__instruction_pointer = 0
+        self.__migajaStack = Stack()
         self.__quads = quads.get_quad_list()
         self.memory = Memory()
+        self.pending_local_memory = 0
+        self.debug = 0
 
     def execute(self):
         self.memory.load_constants()
@@ -214,13 +262,14 @@ class VirtualMachine:
 
         # print("EXECUTE")
         # table.print_symbols()
+        for i, quad in enumerate(self.__quads):
+            print(f"{i}: {quad}")
 
         last_quad = len(self.__quads)
 
         while self.__instruction_pointer < last_quad:
-            # print("current pointer: ", self.__instruction_pointer)
             self.execute_quad()
-        self.memory.print_memory()
+        # self.memory.print_memory()
 
     def get_var_type(self, value):
         # print("VALUE: ", value)
@@ -235,30 +284,111 @@ class VirtualMachine:
 
         if isinstance(value, str):
             return "char"
+        
+    def insert_in_pending_local_memory(self, v_address,value):
+        rel_address = v_address - local_base
+
+        self.pending_local_memory.get_curr_memory()[rel_address] = value
+        # self.pending_local_memory[rel_address] = value
     
     def execute_quad(self):
         operation, left_op, right_op, result = self.__quads[self.__instruction_pointer]
 
         if operation == "ERA":
+            # self.memory.push_to_stack_segment(result)
+            self.pending_local_memory = LocalMemory(result)
+            self.__instruction_pointer += 1
+            print(f"ERA -> {self.__instruction_pointer}")
+            # self.memory.print_memory()
+            # self.__instruction_pointer == len(self.__quads)
+
+        elif operation == "ERAMAIN":
             self.memory.push_to_stack_segment(result)
             self.__instruction_pointer += 1
+            print(f"ERAMAIN -> {self.__instruction_pointer}")
         
         elif operation == "GOTO":
             self.__instruction_pointer = result
+            print(f"GOTO -> {self.__instruction_pointer}")
 
         elif operation == "PRINT":
             value_to_print = self.memory.get_value(result)
             print("ESTO SE DEBERIA DE PRINTEAR")
             print(value_to_print)
             self.__instruction_pointer += 1
+
         
         elif operation == "GOTOF":
             control_var = self.memory.get_value(left_op)
+
 
             if control_var:
                 self.__instruction_pointer += 1
             else:
                 self.__instruction_pointer = result
+
+            # if self.debug == 5:
+            #     print(f"controlllll? : {control_var}")
+            #     print(f"GOTOF -> {self.__instruction_pointer}")
+            #     raise Exception("MAYBE?")
+
+        elif operation == "RETURN":
+          return_value = self.memory.get_value(result)
+        #   if self.debug == 5:
+        #         print(f"this is returning? : {return_value}")
+        #         print(f"v_add: {left_op}")
+        #         table.print_symbols()
+        #         raise Exception("MAYBE?")
+          self.memory.assign_value(left_op, return_value)
+
+          self.memory.kill_function()
+          migaja = self.__migajaStack.pop()
+          self.__instruction_pointer = migaja
+        #   self.__instruction_pointer += 1
+
+          
+          print(f"RETURN -> {self.__instruction_pointer}")
+
+        elif operation == "PARAM":
+            left_op_value = self.memory.get_value(left_op)
+            param_value = self.memory.get_value(result)
+
+            left_op_type = self.get_var_type(left_op_value)
+            param_type = self.get_var_type(param_value)
+
+            if left_op_type != param_type:
+                raise Exception(f"Expected a '{param_type}' param, received a '{left_op_type}'")
+
+
+            self.insert_in_pending_local_memory(result, left_op_value)
+
+            # self.pending_local_memory.print_local_memory()
+            self.__instruction_pointer += 1
+            print(f"PARAM -> {self.__instruction_pointer}")
+            # self.__instruction_pointer = len(self.__quads)
+        
+        elif operation == "GOSUB":
+            # print("BEFORE")
+            # self.memory.print_memory()
+            self.memory.push_local_memory_to_stack_segment(self.pending_local_memory)
+            # print("AFTER")
+            # self.memory.print_memory()
+            self.__migajaStack.push(self.__instruction_pointer + 1)
+            self.__instruction_pointer = result
+            print(f"GOSUB -> {self.__instruction_pointer}")
+
+            # self.__instruction_pointer = len(self.__quads)
+
+        elif operation == "ENDPROC":
+            # raise Exception("we did it!")
+            self.memory.kill_function()
+            migaja = self.__migajaStack.pop()
+            self.__instruction_pointer = migaja
+            print(f"ENDPROC -> {self.__instruction_pointer}")
+
+        elif operation == "ENDPROCMAIN":
+            self.memory.kill_function()
+            self.__instruction_pointer += 1
 
         elif operation == "=":
             left_op_value = self.memory.get_value(left_op)
@@ -385,6 +515,7 @@ class VirtualMachine:
             self.__instruction_pointer += 1
         
         elif operation == "==":
+            self.debug += 1
             left_op_value = self.memory.get_value(left_op)
             right_op_value = self.memory.get_value(right_op)
 
@@ -394,17 +525,27 @@ class VirtualMachine:
             ind = ella_baila_sola(left_var_type, right_var_type, operation)
 
             if ind == -1:
-                raise Exception(f"'{left_op_type}' not compatible with '{result_type}' on {operation}")
+                raise Exception(f"'{left_var_type}' not compatible with '{right_var_type}' on {operation}")
 
             return_type = ind_to_varStr[ind]
             
             if return_type != "bool":
                 raise Exception("Should be boolean")
-            
+            # table.print_symbols()
+            # self.memory.print_memory()
+            # print(f"v_add of left_op: {left_op}")
+            # if self.debug == 5:
+            #     print(f"comparing: {left_op_value} == {right_op_value}")
+            #     print(f"type: {left_var_type} == {right_var_type}")
+            #     raise Exception("MAYBE?")
             if left_op_value == right_op_value:
                 control = True
             else:
                 control = False
+            
+            # if self.debug == 5:
+            #     print(f"control? : {control}")
+            #     raise Exception("MAYBE?")
 
             self.memory.assign_value(result, control)
             self.__instruction_pointer += 1

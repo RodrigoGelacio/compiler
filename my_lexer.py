@@ -89,9 +89,8 @@ def t_CHAR(t):
 
 
 def t_BOOL(t):
-    r"true"
-    r"false"
-    if t.type == "true":
+    r"(true|false)"
+    if t.value == "true":
         t.value = True
     else:
         t.value = False

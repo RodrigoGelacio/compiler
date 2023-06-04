@@ -17,33 +17,37 @@ parser = yacc.yacc(module=my_parser)
 
 ex = r"""
 program lol;
-int my_int;
+
+func int fact(int num){
+    int i;
+    if(num == 1){
+        return (1);
+    }
+
+    return (num * fact(num-1));
+}
 
 main(){
 
-    float f;
-    bool boo;
+    int i;
 
-    f = 5 * 2.5;
+    i = fact(5);
 
-    if(f > 1){
-        f = f + 1;
-    }
+    print(i);
 
-    print(f);
 }
 """
 
 result = parser.parse(ex)
-print()
-print("<-------- SYMBOL TABLE ---------->")
-table.print_symbols()
+# print()
+# print("<-------- SYMBOL TABLE ---------->")
+# table.print_symbols()
 
-print()
-print("<-------- Quads ---------->")
-quad_list = quads.get_quad_list()
-for i, e in enumerate(quad_list):
-    quad = f"{i}: "
-    for elem in e:
-        quad += f" {elem},"
-    print(quad)
+# print()
+# print("<-------- Quads ---------->")
+# quad_list = quads.get_quad_list()
+# for i, e in enumerate(quad_list):
+#     quad = f"{i}: "
+#     for elem in e:
+#         quad += f" {elem},"
+#     print(quad)
