@@ -275,7 +275,6 @@ class VirtualMachine:
         self.__quads = quads.get_quad_list()
         self.memory = Memory()
         self.pending_local_memory = 0
-        self.debug = 0
 
     def execute(self):
         self.memory.load_constants()
@@ -560,7 +559,6 @@ class VirtualMachine:
 
         
         elif operation == "==":
-            self.debug += 1
             left_op_value = self.memory.get_value(left_op)
             right_op_value = self.memory.get_value(right_op)
 

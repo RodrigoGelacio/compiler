@@ -35,7 +35,7 @@ def ella_baila_sola(op1_var_type, op2_var_type, operation):
         return cubo[ind_op_1][ind_op_2][operation]
 
     else:
-        raise ValueError("El operante no es compatible con los tipos de este lenguaje.")
+        raise ValueError("The operant is not compatible with the types of this language.")
 
 
 def ind_with_var(op):

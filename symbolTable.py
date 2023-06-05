@@ -99,11 +99,17 @@ class SymbolTable:
                         key
                     ] = value
             if self.current_context == "global":
-                self.symbols[self.current_context]["vars"][kwargs["id_name"]]["v_address"] = self.__global_address
-                self.__global_address += 1
+                if self.__global_address < 10000:
+                    self.symbols[self.current_context]["vars"][kwargs["id_name"]]["v_address"] = self.__global_address
+                    self.__global_address += 1
+                else:
+                    raise Exception("Global memory exceeded.")
             else:
-                self.symbols[self.current_context]["vars"][kwargs["id_name"]]["v_address"] = self.__local_address
-                self.__local_address += 1
+                if self.__local_address < 20000:
+                    self.symbols[self.current_context]["vars"][kwargs["id_name"]]["v_address"] = self.__local_address
+                    self.__local_address += 1
+                else:
+                    raise Exception("Local Memory exceeded")
             if dim:
                 self.if_var_has_dim_allocate_memory(**kwargs)
 
@@ -113,9 +119,12 @@ class SymbolTable:
                     self.symbols[self.current_context]["temps"][kwargs["id_name"]][
                         key
                     ] = value
-            self.symbols[self.current_context]["temps"][kwargs["id_name"]]["v_address"] = self.__local_address
-            self.__local_address += 1
-            self.temp_counter += 1
+            if self.__local_address < 20000:
+                self.symbols[self.current_context]["temps"][kwargs["id_name"]]["v_address"] = self.__local_address
+                self.__local_address += 1
+                self.temp_counter += 1
+            else:
+                raise Exception("Local Memory exceeded")
 
         elif insert_type == "params":
             for key, value in kwargs.items():
@@ -133,22 +142,31 @@ class SymbolTable:
                     kwargs["id_name"] = str(kwargs["id_name"])
 
             if not self.symbols["constants"][kwargs["id_name"]]:
-                self.symbols["constants"][kwargs["id_name"]]["v_address"] = self.__constant_address
-                self.__constant_address += 1
+                if self.__constant_address < 30000:
+                    self.symbols["constants"][kwargs["id_name"]]["v_address"] = self.__constant_address
+                    self.__constant_address += 1
+                else:
+                    raise Exception("Constant memory exceeded")
 
         elif insert_type == "return":
             parche_guadalupano = "_" + self.current_context
-            self.symbols["global"]["vars"][parche_guadalupano]["var_type"] = kwargs["var_type"]
-            self.symbols["global"]["vars"][parche_guadalupano]["v_address"] = self.__global_address
-            self.__global_address += 1
+            if self.__global_address < 10000:
+                self.symbols["global"]["vars"][parche_guadalupano]["var_type"] = kwargs["var_type"]
+                self.symbols["global"]["vars"][parche_guadalupano]["v_address"] = self.__global_address
+                self.__global_address += 1
+            else:
+                raise Exception("Global Memory exceeded")
 
         elif insert_type == "pointer":
             for key, value in kwargs.items():
                 if key != "id_name":
                     self.symbols["pointers"][kwargs["id_name"]][key] = value
-            self.symbols["pointers"][kwargs["id_name"]]["v_address"] = self.__pt_address
-            self.__pt_address += 1
-            self.ptr_counter += 1
+            if self.__pt_address < 39999:
+                self.symbols["pointers"][kwargs["id_name"]]["v_address"] = self.__pt_address
+                self.__pt_address += 1
+                self.ptr_counter += 1
+            else:
+                raise Exception("Pointer memory exceeded")
 
         elif insert_type == "func":
             for key, value in kwargs.items():
