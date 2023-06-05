@@ -1,2 +1,2 @@
 # compiler
-General object oriented programming language.
+A general statistic programming language.
