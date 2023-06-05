@@ -1,0 +1,34 @@
+name: compis
+channels:
+  - conda-forge
+dependencies:
+  - bzip2
+  - ca-certificates
+  - libexpat
+  - libffi
+  - libsqlite
+  - libzlib
+  - ncurses
+  - openssl
+  - pip
+  - python
+  - readline
+  - setuptools
+  - tk
+  - tzdata
+  - wheel
+  - xz
+  - pip:
+    - contourpy
+    - cycler
+    - fonttools
+    - kiwisolver
+    - matplotlib
+    - numpy
+    - packaging
+    - pillow
+    - ply
+    - pyparsing
+    - python-dateutil
+    - six
+prefix: /opt/homebrew/Caskroom/miniforge/base/envs/compis
