@@ -314,9 +314,9 @@ def p_save_exp_start_direction(p):
 def p_read(p):
     """read : READ LP var_usage RP SEMICOLON"""
 
-    variable = p[3][0]
+    _,_,v_add= table.validate(p[3])
 
-    quad.insert("READ", "somehting", "", variable)
+    quad.insert("READ", "", "", v_add)
 
 
 # constants

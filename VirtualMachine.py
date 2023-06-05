@@ -4,6 +4,7 @@ from Stack import Stack
 from oracle import ella_baila_sola
 import math
 import matplotlib.pyplot as plt
+import re
 
 ind_to_varStr = {0: "int", 1: "float", 2: "char", 3: "bool"}
 
@@ -497,6 +498,48 @@ class VirtualMachine:
             plt.show()
 
             self.__instruction_pointer += 1
+
+        elif operation == "READ":
+            value = self.memory.get_value(result)
+
+            value_type = self.get_var_type(value)
+
+            aux = input()
+
+            copy_aux = aux
+
+            if re.match(r"\d+\.\d+", aux):
+                aux = float(aux)
+                input_type = "float"
+            
+            elif re.match(r"\d+", aux):
+                aux = int(aux)
+                input_type = "int"
+            
+            elif re.match(r".{2,}", aux):
+                raise Exception("Language does not permit strings")
+            
+            elif re.match(r".", aux):
+                input_type = "char"
+            
+            index = ella_baila_sola(input_type, value_type, "=")
+
+            if index == -1:
+                raise Exception(f"Cannot assign a '{input_type}' to a '{value_type}'")
+            
+            result_type = ind_to_varStr[index]
+
+            if result_type == "int":
+                final_assign = int(copy_aux)
+
+            elif result_type == "float":
+                final_assign = float(copy_aux) 
+
+            self.memory.assign_value(result, final_assign)
+
+            self.__instruction_pointer += 1
+
+
 
 
         elif operation == "=":
