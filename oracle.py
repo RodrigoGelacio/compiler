@@ -39,6 +39,14 @@ def ella_baila_sola(op1_var_type, op2_var_type, operation):
 
 
 def ind_with_var(op):
+    """ Maps str var_type to int
+
+        Vars: 
+            op: str, variable type
+
+        Return:
+            int
+    """
 
     var_to_ind = {"int": 0, "float": 1, "char": 2, "bool": 3}
 
@@ -46,6 +54,13 @@ def ind_with_var(op):
 
 
 def ind_with_const(op):
+    """ Map literal primitive variable type to int
+        Var:
+            op: bool, int, float, str,
+        
+        Return:
+            int
+    """
     if isinstance(op, bool):
         return 3
     elif isinstance(op, int):

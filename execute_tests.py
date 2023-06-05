@@ -16,17 +16,43 @@ parser = yacc.yacc(module=gStatParser)
 ex = r"""
 program lol;
 
+func int fibonacciR(int num){
+    if(num == 0){
+        return (0);
+    }
+    if(num == 1){
+        return (1);
+    }
+
+    return (fibonacciR(num-1)+fibonacciR(num-2));
+}
+
+func int fibonacciI(int n){
+    int num1, num2, num3;
+
+    num1 = 0;
+    num2 = 1;
+
+    for(int c=0; c < n){
+        num3 = num1 + num2;
+        num1 = num2;
+        num2 = num3;
+    }
+
+    return (num1);
+}
+
 main(){
 
-    int x[2], y[2];
+    int i;
 
-    x[0] = 1;
-    x[1] = 2;
+    i = fibonacciR(20);
 
-    y[0] = 1;
-    y[1] = 2;
+    print(i);
 
-    plot(x,y);
+    i = fibonacciI(20);
+
+    print(i);
 
 }
 """

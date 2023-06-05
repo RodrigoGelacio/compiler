@@ -16,7 +16,12 @@ table = SymbolTable()
 quads = Quad()
 
 class LocalMemory:
-    def __init__(self, func_id):
+    def __init__(self, func_id: str):
+        """Initializes the LocalMemory object.
+
+        Args:
+            func_id: The identifier of the function.
+        """
         self.__local = []
 
         size = table.get_func_true_size(func_id)
@@ -76,31 +81,57 @@ class LocalMemory:
                 else:
                     raise Exception(f"What type of variable is this?: '{key}'")
 
+    def get_value_with_address(self, address: int):
+        """Gets the value at the specified address in the local memory.
 
-    def get_value_with_address(self, address):
+        Args:
+            address: The virtual address of the value.
+
+        Returns:
+            The value at the specified address, or None if the address is invalid.
+        """
         return self.__local[address]
     
     def get_curr_memory(self):
+        """Returns the current state of the local memory.
+
+        Returns:
+            A list representing the current state of the local memory.
+        """
         return self.__local
     
     def print_local_memory(self):
+        """Prints the contents of the local memory."""
         for i, elem in enumerate(self.__local):
             print(f"{i}: {elem}")
-    def get_array(self, base_arr_v_address, arr_size):
+    
+    def get_array(self, base_arr_v_address: int, arr_size: int):
+        """Gets an array from the local memory.
+
+        Args:
+            base_arr_v_address: The virtual address of the base element of the array.
+            arr_size: The size of the array.
+
+        Returns:
+            A list representing the array retrieved from the local memory.
+        """
         array = []
         for i in range(arr_size):
             array.append(self.__local[base_arr_v_address+i])
         
         return array
 
+
 class Memory:
     def __init__(self):
+        """Initializes the Memory object."""
         self.__global = []
         self.__constants = []
         self.__pointers = []
         self.__local = Stack()
 
     def load_pointers(self):
+        """Loads pointers into the memory."""
         ptrs = table.get_ptrs()
 
         ptrs_size = len(ptrs)
@@ -125,7 +156,17 @@ class Memory:
 
                 else:
                     raise Exception(f"What type of variable is this?: '{key}'")
+    
     def get_whole_array(self, base_arr_v_address, arr_size):
+        """Gets the whole array starting from the specified base address.
+
+        Args:
+            base_arr_v_address: The base virtual address of the array.
+            arr_size: The size of the array.
+
+        Returns:
+            The array with the specified size starting from the base address.
+        """
         if base_arr_v_address < 10000:
             rel_address = base_arr_v_address
             array = []
@@ -136,11 +177,13 @@ class Memory:
         if base_arr_v_address < 20000:
             rel_address = base_arr_v_address - local_base
             return self.__local.top().get_array(rel_address, arr_size)
-
+    
     def kill_function(self):
+        """Removes the top local memory from the stack."""
         self.__local.pop()
 
     def load_global(self):
+        """Loads global variables into the memory."""
         global_var = table.get_globals()
 
         global_size = table.get_globals_true_size()
@@ -179,6 +222,7 @@ class Memory:
                     raise Exception(f"What type of variable is this?: '{key}'")
 
     def load_constants(self):
+        """Loads constants into the memory."""
         constants = table.get_constants()
 
         const_size = len(constants)
@@ -196,12 +240,30 @@ class Memory:
             self.__constants[rel_v_add] = const
     
     def push_to_stack_segment(self, func_id):
+        """Pushes a new local memory to the stack segment.
+
+        Args:
+            func_id: The identifier of the function.
+        """
         self.__local.push(LocalMemory(func_id))
 
     def push_local_memory_to_stack_segment(self, localMemory):
+        """Pushes an existing local memory to the stack segment.
+
+        Args:
+            localMemory: The LocalMemory object to be pushed.
+        """
         self.__local.push(localMemory)
     
     def get_value(self, v_address):
+        """Gets the value at the specified virtual address in the memory.
+
+        Args:
+            v_address: The virtual address of the value.
+
+        Returns:
+            The value at the specified address, or None if the address is invalid.
+        """
         if v_address < 10000:
             rel_address = v_address
             return self.__global[rel_address]
@@ -217,12 +279,24 @@ class Memory:
         else:
             rel_address = v_address - ptr_base
             return self.get_value(self.__pointers[rel_address])
-        
+    
     def assign_value_ptr(self, v_address, value):
-        rel_addres = v_address - ptr_base
-        self.__pointers[rel_addres] = value
+        """Assigns a value to the pointer at the specified virtual address.
+
+        Args:
+            v_address: The virtual address of the pointer.
+            value: The value to be assigned.
+        """
+        rel_address = v_address - ptr_base
+        self.__pointers[rel_address] = value
     
     def assign_value(self, v_address, value):
+        """Assigns a value to the specified virtual address in the memory.
+
+        Args:
+            v_address: The virtual address.
+            value: The value to be assigned.
+        """
         if v_address < 10000:
             self.__global[v_address] = value
         
@@ -235,12 +309,12 @@ class Memory:
             self.__constants[rel_address] = value
         
         else:
-            rel_addres = v_address - ptr_base
-            self.assign_value(self.__pointers[rel_addres], value)
+            rel_address = v_address - ptr_base
+            self.assign_value(self.__pointers[rel_address], value)
 
 
     def print_memory(self):
-        
+        """Prints the contents of the memory."""
         print("<-------- Global ---------->")
         for i, elem in enumerate(self.__global):
             print(f"{i}: {elem}")
@@ -270,6 +344,7 @@ class Memory:
 
 class VirtualMachine:
     def __init__(self):
+        """Initializes the VirtualMachine object."""
         self.__instruction_pointer = 0
         self.__migajaStack = Stack()
         self.__quads = quads.get_quad_list()
@@ -277,6 +352,7 @@ class VirtualMachine:
         self.pending_local_memory = 0
 
     def execute(self):
+        """Executes the quads and performs the operations."""
         self.memory.load_constants()
         self.memory.load_global()
         self.memory.load_pointers()
@@ -287,11 +363,19 @@ class VirtualMachine:
             self.execute_quad()
 
     def get_var_type(self, value):
+        """Returns the type of a given value.
+
+        Args:
+            value: The value to determine the type of.
+
+        Returns:
+            The type of the value as a string.
+        """
         if isinstance(value, int):
             return "int"
 
         if isinstance(value, float):
-             return "float"
+            return "float"
 
         if isinstance(value, bool):
             return "bool"
@@ -300,13 +384,21 @@ class VirtualMachine:
             return "char"
         
     def insert_in_pending_local_memory(self, v_address,value):
+        """Inserts a value into the pending local memory at the specified virtual address.
+
+        Args:
+            v_address: The virtual address to insert the value into.
+            value: The value to be inserted.
+        """
         rel_address = v_address - local_base
 
         self.pending_local_memory.get_curr_memory()[rel_address] = value
         # self.pending_local_memory[rel_address] = value
-    
+
     def execute_quad(self):
+        """Executes a single quad operation."""
         operation, left_op, right_op, result = self.__quads[self.__instruction_pointer]
+
 
         if operation == "ERA":
             self.pending_local_memory = LocalMemory(result)
