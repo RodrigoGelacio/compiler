@@ -15,15 +15,43 @@ parser = yacc.yacc(module=gStatParser)
 
 ex = r"""
 program lol;
+int i[10];
+
+func int find(int num){
+
+    for(int c=0; c < 10){
+        if(i[c] == num){
+            return (c);
+        }
+    }
+
+    return (10);
+
+}
 
 main(){
+    int index;
 
-    float i;
+    i[0] = 1;
+    i[1] = 2;
+    i[2] = 3;
+    i[3] = 4;
+    i[4] = 5;
+    i[5] = 6;
+    i[6] = 7;
+    i[7] = 8;
+    i[8] = 9;
+    i[9] = 10;
 
-    read(i);
 
-    print(i);
+    index = find(12);
 
+    if(index != 10){
+        print(index);
+    }
+    else{
+        print('f');
+    }
 }
 """
 

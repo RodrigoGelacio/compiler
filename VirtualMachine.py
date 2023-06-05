@@ -692,7 +692,31 @@ class VirtualMachine:
             self.memory.assign_value(result, left_op_value - right_op_value)
             self.__instruction_pointer += 1
 
-        
+        elif operation == "!=":
+            left_op_value = self.memory.get_value(left_op)
+            right_op_value = self.memory.get_value(right_op)
+
+            left_var_type = self.get_var_type(left_op_value)
+            right_var_type = self.get_var_type(right_op_value)
+
+            ind = ella_baila_sola(left_var_type, right_var_type, operation)
+
+            if ind == -1:
+                raise Exception(f"'{left_var_type}' not compatible with '{right_var_type}' on {operation}")
+
+            return_type = ind_to_varStr[ind]
+            
+            if return_type != "bool":
+                raise Exception("Should be boolean")
+            
+            if left_op_value != right_op_value:
+                control = True
+            else:
+                control = False
+
+            self.memory.assign_value(result, control)
+            self.__instruction_pointer += 1
+
         elif operation == "==":
             left_op_value = self.memory.get_value(left_op)
             right_op_value = self.memory.get_value(right_op)
