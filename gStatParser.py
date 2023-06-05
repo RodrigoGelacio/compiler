@@ -574,10 +574,14 @@ def p_plot(p):
     _,x_dims,_ = table.get_dim_var_info(x_id)
     _,y_dims,_ = table.get_dim_var_info(y_id)
 
-    x_size = math.prod(x_dims)
-    y_size = math.prod(y_dims)
+    if len(x_dims) == 1 and len(y_dims) == 1:
+        x_size = math.prod(x_dims)
+        y_size = math.prod(y_dims)
 
-    quad.insert("PLOT",(x_v_add, x_size), (y_v_add, y_size), "")
+        quad.insert("PLOT",(x_v_add, x_size), (y_v_add, y_size), "")
+
+    else:
+        raise Exception("Plot function only works with unidimensional arrays")
 
 
 # var_usage
