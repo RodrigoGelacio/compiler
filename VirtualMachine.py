@@ -1,7 +1,7 @@
 from symbolTable import SymbolTable
 from Quad import Quad
 from Stack import Stack
-from cubo_semantico import ella_baila_sola
+from oracle import ella_baila_sola
 import math
 import matplotlib.pyplot as plt
 

@@ -1,7 +1,7 @@
 import ply.lex as lex
 import ply.yacc as yacc
-import my_lexer
-import my_parser
+import gStatLex
+import gStatParser
 from symbolTable import SymbolTable
 from Quad import Quad
 
@@ -10,8 +10,8 @@ quads = Quad()
 table = SymbolTable()
 
 
-lexer = lex.lex(module=my_lexer)
-parser = yacc.yacc(module=my_parser)
+lexer = lex.lex(module=gStatLex)
+parser = yacc.yacc(module=gStatParser)
 
 ex = r"""
 program lol;

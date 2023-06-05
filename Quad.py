@@ -1,4 +1,4 @@
-from cubo_semantico import cubo
+from oracle import cubo
 from Stack import Stack
 
 class Quad:

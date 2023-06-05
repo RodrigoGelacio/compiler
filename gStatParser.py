@@ -1,10 +1,10 @@
 import ply.yacc as yacc
 import ply.lex as lex
-import my_lexer
-from my_lexer import tokens
+import gStatLex
+from gStatLex import tokens
 from symbolTable import SymbolTable
 from Quad import Quad
-from cubo_semantico import ella_baila_sola
+from oracle import ella_baila_sola
 from VirtualMachine import VirtualMachine
 import math
 
@@ -704,7 +704,7 @@ def p_error(p):
 
 
 # Build lexer
-built_lexer = lex.lex(module=my_lexer)
+built_lexer = lex.lex(module=gStatLex)
 
 # Build the parser
 parser = yacc.yacc()
